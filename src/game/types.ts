@@ -38,7 +38,7 @@ export type Relationship = {
   id: string;
   name: string;
   role: "family" | "friend" | "possible_intimacy" | "mentor";
-  closeness: number;
+  warmth: number;
   tension: number;
   note: string;
 };
@@ -86,7 +86,7 @@ export type MonthScenario = {
 
 export type RelationshipChange = {
   relationshipId: string;
-  closenessDelta: number;
+  warmthDelta: number;
   tensionDelta: number;
   reason: string;
 };
