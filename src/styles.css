@@ -63,6 +63,40 @@ textarea {
   gap: 16px;
 }
 
+.top-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 12px;
+}
+
+.language-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 1fr);
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.language-toggle button {
+  min-width: 58px;
+  border: 0;
+  border-right: 2px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 9px 10px;
+}
+
+.language-toggle button:last-child {
+  border-right: 0;
+}
+
+.language-toggle button.is-active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--rust);
@@ -542,6 +576,10 @@ h2 {
 
   .scene-header {
     flex-direction: column;
+  }
+
+  .top-controls {
+    justify-content: start;
   }
 
   .pixel-stage {
