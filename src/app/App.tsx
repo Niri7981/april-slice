@@ -214,43 +214,51 @@ export function App() {
           </div>
         </div>
 
-        <nav className="time-strip" aria-label="April time slots">
-          {text.timeSlots.map((slot) => {
-            const Icon = slot.icon;
-
-            return (
-              <article
-                className={`time-card ${slot.active ? "is-active" : ""}`}
-                key={slot.id}
-              >
-                <div className="time-card-top">
-                  <Icon size={18} />
-                  <span>{slot.label}</span>
-                </div>
-                <strong>{slot.scene}</strong>
-                <small>{slot.note}</small>
-              </article>
-            );
-          })}
-        </nav>
-
         <div className="pixel-stage" aria-label="Seaside pixel stage">
-          <div className="sun" />
-          <div className="cloud cloud-left" />
-          <div className="cloud cloud-right" />
-          <div className="school-building">
-            <span />
-            <span />
-            <span />
+          <nav className="map-hud time-strip" aria-label="April time slots">
+            {text.timeSlots.map((slot) => {
+              const Icon = slot.icon;
+
+              return (
+                <article
+                  className={`time-card ${slot.active ? "is-active" : ""}`}
+                  key={slot.id}
+                >
+                  <div className="time-card-top">
+                    <Icon size={18} />
+                    <span>{slot.label}</span>
+                  </div>
+                  <strong>{slot.scene}</strong>
+                  <small>{slot.note}</small>
+                </article>
+              );
+            })}
+          </nav>
+
+          <div className="map-label">
+            <span>{text.speaker}</span>
           </div>
+
           <div className="sea" />
-          <div className="rail" />
-          <div className="avatar">
-            <div className="head" />
-            <div className="hair" />
-            <div className="body" />
-            <div className="bag" />
-            <div className="legs" />
+          <div className="shoreline" />
+          <div className="grass grass-top" />
+          <div className="grass grass-bottom" />
+          <div className="road road-left" />
+          <div className="road road-bottom" />
+          <div className="station">
+            <div className="station-roof" />
+            <div className="station-room" />
+            <div className="bench" />
+            <div className="vending-machine" />
+          </div>
+          <div className="tracks" />
+          <div className="lamp lamp-left" />
+          <div className="lamp lamp-right" />
+          <div className="tree" />
+          <div className="topdown-avatar">
+            <span className="avatar-hair" />
+            <span className="avatar-face" />
+            <span className="avatar-body" />
           </div>
         </div>
 

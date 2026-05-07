@@ -4,7 +4,8 @@
   color: #2d2a24;
   background: #efe8db;
   font-family:
-    "Fusion Pixel 12px Mono latin", "Courier New", Courier, monospace;
+    "Fusion Pixel 12px M latin", "Fusion Pixel 12px Monospaced SC",
+    "Courier New", Courier, monospace;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -31,12 +32,12 @@ body {
   background:
     repeating-linear-gradient(
       0deg,
-      rgba(45, 42, 36, 0.05) 0 2px,
-      transparent 2px 4px
+      rgba(26, 32, 29, 0.08) 0 2px,
+      transparent 2px 6px
     ),
-    linear-gradient(rgba(47, 92, 103, 0.09) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(47, 92, 103, 0.08) 2px, transparent 2px),
-    linear-gradient(135deg, #f1e5d2 0%, #d7d4c4 52%, #b8c0b2 100%);
+    linear-gradient(rgba(36, 60, 48, 0.12) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(36, 60, 48, 0.1) 2px, transparent 2px),
+    linear-gradient(135deg, #d6dac4 0%, #aeb69f 48%, #61775e 100%);
   background-size: auto, 24px 24px, 24px 24px, cover;
 }
 
@@ -76,15 +77,16 @@ button,
 .relationship-head,
 .relationship-bars {
   font-family:
-    "Fusion Pixel 12px Mono latin", "Courier New", Courier, monospace;
+    "Fusion Pixel 12px M latin", "Fusion Pixel 12px Monospaced SC",
+    "Courier New", Courier, monospace;
 }
 
 .shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 410px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
   min-height: 100vh;
-  padding: 28px;
+  padding: 20px;
 }
 
 .scene-panel,
@@ -95,7 +97,7 @@ button,
 .scene-panel {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .scene-header {
@@ -157,11 +159,12 @@ p {
 h1 {
   max-width: 760px;
   margin-bottom: 0;
-  font-size: clamp(2rem, 4vw, 4.7rem);
+  font-size: clamp(1.6rem, 3vw, 3.6rem);
   line-height: 0.98;
   text-shadow: 3px 3px 0 rgba(244, 237, 222, 0.9);
   font-family:
-    "Fusion Pixel 12px Mono latin", "Courier New", Courier, monospace;
+    "Fusion Pixel 12px M latin", "Fusion Pixel 12px Monospaced SC",
+    "Courier New", Courier, monospace;
   font-weight: 400;
 }
 
@@ -189,7 +192,7 @@ h2 {
 .time-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .time-card {
@@ -198,7 +201,7 @@ h2 {
     linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0 25%, transparent 25%),
     var(--paper);
   box-shadow: 4px 4px 0 var(--paper-shadow), 8px 8px 0 var(--ink);
-  padding: 12px;
+  padding: 8px;
 }
 
 .time-card.is-active {
@@ -219,8 +222,8 @@ h2 {
 
 .time-card strong {
   display: block;
-  margin-bottom: 6px;
-  font-size: 1.08rem;
+  margin-bottom: 4px;
+  font-size: 0.92rem;
 }
 
 .time-card small,
@@ -232,15 +235,15 @@ h2 {
 .pixel-stage {
   position: relative;
   overflow: hidden;
-  min-height: 460px;
+  min-height: auto;
+  aspect-ratio: 16 / 9;
   border: 4px solid var(--ink);
   background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.06) 0 10px,
-      transparent 10px 20px
-    ),
-    linear-gradient(#b8cbc4 0 42%, #78999a 42% 60%, #c8bb9f 60%);
+    linear-gradient(135deg, transparent 0 46%, rgba(255, 255, 255, 0.45) 46% 47%, transparent 47%),
+    radial-gradient(circle at 78% 14%, rgba(255, 255, 255, 0.6) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 21%, rgba(255, 255, 255, 0.6) 0 2px, transparent 3px),
+    linear-gradient(115deg, #4f9bb2 0 38%, transparent 38%),
+    #5a8f4d;
   box-shadow:
     inset 0 0 0 6px rgba(45, 42, 36, 0.15),
     8px 8px 0 var(--paper-shadow),
@@ -260,177 +263,233 @@ h2 {
   opacity: 0.32;
 }
 
-.sun,
-.cloud,
-.school-building,
-.school-building span,
 .sea,
-.rail,
-.avatar,
-.head,
-.hair,
-.body,
-.bag,
-.legs {
+.shoreline,
+.grass,
+.road,
+.station,
+.station-roof,
+.station-room,
+.bench,
+.vending-machine,
+.tracks,
+.lamp,
+.tree,
+.topdown-avatar,
+.avatar-hair,
+.avatar-face,
+.avatar-body,
+.map-hud,
+.map-label {
   position: absolute;
-}
-
-.sun {
-  top: 58px;
-  right: 15%;
-  width: 52px;
-  height: 52px;
-  background: #d88f4c;
-  box-shadow:
-    8px 0 0 #d88f4c,
-    -8px 0 0 #d88f4c,
-    0 8px 0 #d88f4c,
-    0 -8px 0 #d88f4c,
-    16px 16px 0 rgba(45, 42, 36, 0.14);
-}
-
-.cloud {
-  width: 120px;
-  height: 28px;
-  background: #e7e0d4;
-  box-shadow: 34px 18px 0 #e7e0d4, -24px 18px 0 #e7e0d4;
-}
-
-.cloud-left {
-  top: 82px;
-  left: 10%;
-}
-
-.cloud-right {
-  top: 136px;
-  right: 22%;
-  transform: scale(0.72);
-}
-
-.school-building {
-  left: 6%;
-  bottom: 210px;
-  width: 178px;
-  height: 112px;
-  border: 4px solid var(--ink);
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #d8c7aa 0 28px,
-      #c4ad8e 28px 34px
-    );
-}
-
-.school-building::before {
-  position: absolute;
-  inset: -30px 42px auto;
-  height: 28px;
-  content: "";
-  border: 4px solid var(--ink);
-  border-bottom: 0;
-  background: #9f6d55;
-}
-
-.school-building span {
-  top: 20px;
-  width: 24px;
-  height: 26px;
-  border: 2px solid var(--ink);
-  background: #6f8e9c;
-  box-shadow: 0 46px 0 #6f8e9c;
-}
-
-.school-building span:nth-child(1) {
-  left: 22px;
-}
-
-.school-building span:nth-child(2) {
-  left: 74px;
-}
-
-.school-building span:nth-child(3) {
-  right: 22px;
 }
 
 .sea {
+  top: 0;
+  right: 0;
+  width: 52%;
+  height: 46%;
+  background:
+    radial-gradient(circle at 60% 20%, rgba(255,255,255,0.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 34%, rgba(255,255,255,0.7) 0 2px, transparent 3px),
+    repeating-linear-gradient(0deg, #4f9bb2 0 6px, #438fa6 6px 12px);
+  clip-path: polygon(16% 0, 100% 0, 100% 100%, 0 76%);
+}
+
+.shoreline {
+  top: 4%;
+  right: 36%;
+  width: 18%;
+  height: 46%;
+  background:
+    repeating-linear-gradient(135deg, #bdb3a0 0 8px, #7a7468 8px 14px);
+  clip-path: polygon(52% 0, 100% 0, 48% 100%, 0 100%);
+}
+
+.grass-top {
+  top: 0;
+  left: 0;
+  width: 49%;
+  height: 52%;
+  background:
+    radial-gradient(circle at 38% 24%, #dda6b5 0 9px, transparent 10px),
+    radial-gradient(circle at 42% 18%, #e6b4c0 0 13px, transparent 14px),
+    repeating-linear-gradient(45deg, #4c793f 0 6px, #3f6e37 6px 12px);
+}
+
+.grass-bottom {
   left: 0;
   right: 0;
-  bottom: 132px;
+  bottom: 0;
+  height: 25%;
+  background: repeating-linear-gradient(45deg, #5d8b49 0 7px, #47743c 7px 13px);
+}
+
+.road-left {
+  top: 0;
+  left: 5%;
+  width: 9%;
+  height: 100%;
+  background: repeating-linear-gradient(0deg, #8d8677 0 10px, #807969 10px 15px);
+}
+
+.road-bottom {
+  left: 0;
+  right: 0;
+  bottom: 18%;
+  height: 20%;
+  background:
+    linear-gradient(90deg, transparent 0 48%, #d5d7cf 48% 53%, transparent 53%),
+    repeating-linear-gradient(90deg, #8d8677 0 12px, #807969 12px 18px);
+}
+
+.station {
+  top: 22%;
+  left: 18%;
+  width: 28%;
+  height: 30%;
+  background: #a9a091;
+  box-shadow: 7px 7px 0 rgba(45, 42, 36, 0.28);
+}
+
+.station-roof {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 36%;
+  background: repeating-linear-gradient(0deg, #2d3940 0 8px, #3e4a50 8px 14px);
+  border-bottom: 4px solid #1f282d;
+}
+
+.station-room {
+  left: 13%;
+  bottom: 12%;
+  width: 46%;
+  height: 42%;
+  background: #4f5e63;
+  border: 4px solid #2a2a24;
+}
+
+.bench {
+  left: 24%;
+  bottom: 22%;
+  width: 26%;
+  height: 8%;
+  background: #2d2a24;
+  box-shadow: 0 8px 0 #7f6a54;
+}
+
+.vending-machine {
+  right: 8%;
+  bottom: 10%;
+  width: 13%;
+  height: 45%;
+  background:
+    linear-gradient(#9fd0d3 0 24%, #d8f0e8 24% 36%, #b46c4b 36% 52%, #345d72 52%);
+  border: 4px solid #2a2a24;
+}
+
+.tracks {
+  left: 38%;
+  right: 0;
+  top: 50%;
+  height: 13%;
+  background:
+    linear-gradient(0deg, #2d2a24 0 5px, transparent 5px 36px, #2d2a24 36px 41px),
+    repeating-linear-gradient(90deg, transparent 0 22px, #2d2a24 22px 28px),
+    #856b4c;
+}
+
+.lamp {
+  width: 5px;
   height: 78px;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      var(--sea) 0 12px,
-      var(--sea-dark) 12px 16px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 22px,
-      rgba(244, 237, 222, 0.3) 22px 28px
-    );
+  background: #2d2a24;
+  box-shadow: 7px 0 0 #6b6256;
 }
 
-.rail {
-  left: 0;
-  right: 0;
-  bottom: 104px;
-  height: 30px;
-  background:
-    linear-gradient(var(--ink) 0 5px, transparent 5px 25px, var(--ink) 25px),
-    repeating-linear-gradient(90deg, transparent 0 44px, var(--ink) 44px 50px);
+.lamp::before {
+  position: absolute;
+  top: 0;
+  left: -7px;
+  width: 18px;
+  height: 10px;
+  content: "";
+  background: #d9cba7;
+  border: 3px solid #2d2a24;
 }
 
-.avatar {
-  left: 50%;
-  bottom: 86px;
-  width: 52px;
-  height: 120px;
-  transform: translateX(-50%);
-  z-index: 1;
-  filter: drop-shadow(8px 8px 0 rgba(45, 42, 36, 0.22));
+.lamp-left {
+  top: 7%;
+  left: 10%;
 }
 
-.head {
-  top: 10px;
-  left: 13px;
+.lamp-right {
+  top: 22%;
+  right: 18%;
+}
+
+.tree {
+  top: 8%;
+  left: 29%;
+  width: 34px;
+  height: 34px;
+  background: #e1aabd;
+  box-shadow:
+    18px 0 0 #d997ad,
+    8px -12px 0 #e8b9c7,
+    8px 26px 0 #81563c;
+}
+
+.topdown-avatar {
+  left: 55%;
+  bottom: 24%;
   width: 26px;
-  height: 26px;
+  height: 34px;
+  z-index: 2;
+  filter: drop-shadow(5px 5px 0 rgba(45, 42, 36, 0.34));
+}
+
+.avatar-hair {
+  top: 0;
+  left: 4px;
+  width: 18px;
+  height: 13px;
+  background: #252323;
+  box-shadow: -3px 4px 0 #252323, 8px 5px 0 #252323;
+}
+
+.avatar-face {
+  top: 10px;
+  left: 7px;
+  width: 12px;
+  height: 8px;
   background: #d1a47d;
 }
 
-.hair {
-  top: 2px;
-  left: 10px;
-  width: 32px;
-  height: 24px;
-  background: #2b2828;
-  box-shadow: -4px 12px 0 #2b2828, 20px 14px 0 #2b2828;
-}
-
-.body {
-  top: 40px;
-  left: 8px;
-  width: 36px;
-  height: 48px;
-  background: #35475a;
-  box-shadow: inset 0 18px 0 #e8dfd0;
-}
-
-.bag {
-  top: 54px;
-  right: 0;
-  width: 14px;
-  height: 32px;
-  background: #5a3c2f;
-}
-
-.legs {
+.avatar-body {
   bottom: 0;
-  left: 15px;
-  width: 8px;
-  height: 34px;
-  background: #222;
-  box-shadow: 14px 0 0 #222;
+  left: 5px;
+  width: 16px;
+  height: 18px;
+  background: #2f4558;
+  box-shadow: inset 0 6px 0 #e8dfd0;
+}
+
+.map-hud {
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  width: min(640px, calc(100% - 24px));
+}
+
+.map-label {
+  z-index: 3;
+  right: 14px;
+  bottom: 14px;
+  border: 3px solid var(--ink);
+  background: rgba(244, 237, 222, 0.92);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 8px 10px;
 }
 
 .text-box,

@@ -10,10 +10,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@fontsource/fusion-pixel-12px-monospaced-sc": "^5.2.5",
     "lucide-react": "^0.468.0",
-    "recharts": "^2.13.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^2.13.3",
     "zod": "^3.23.8",
     "zustand": "^5.0.1"
   },
