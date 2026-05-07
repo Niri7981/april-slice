@@ -1,7 +1,10 @@
+@import url("https://fontsapi.zeoseven.com/570/main/result.css");
+
 :root {
   color: #2d2a24;
   background: #efe8db;
-  font-family: "Courier New", Courier, monospace;
+  font-family:
+    "Fusion Pixel 12px Mono latin", "Courier New", Courier, monospace;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -61,6 +64,19 @@ button,
 input,
 textarea {
   font: inherit;
+}
+
+button,
+.eyebrow,
+.month-chip,
+.time-card,
+.agent-card,
+.card-title,
+.stat-row,
+.relationship-head,
+.relationship-bars {
+  font-family:
+    "Fusion Pixel 12px Mono latin", "Courier New", Courier, monospace;
 }
 
 .shell {
@@ -144,11 +160,15 @@ h1 {
   font-size: clamp(2rem, 4vw, 4.7rem);
   line-height: 0.98;
   text-shadow: 3px 3px 0 rgba(244, 237, 222, 0.9);
+  font-family:
+    "Fusion Pixel 12px Mono latin", "Courier New", Courier, monospace;
+  font-weight: 400;
 }
 
 h2 {
   margin-bottom: 14px;
   font-size: 1.25rem;
+  font-weight: 400;
 }
 
 .month-chip,
@@ -429,7 +449,7 @@ h2 {
   min-height: 92px;
   padding: 18px;
   font-size: 1rem;
-  line-height: 1.6;
+  line-height: 1.75;
   position: relative;
 }
 
