@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { aprilScenario } from "../game/world";
+import regionMapApril from "../assets/pixel/scenes/region_map_april.png";
 
 type Language = "zh" | "en";
 
@@ -409,17 +410,8 @@ export function App() {
               </button>
             </header>
 
-            <div className="region-map-placeholder">
-              <div className="region-mountains" />
-              <div className="region-forest" />
-              <div className="region-shrine" />
-              <div className="region-school" />
-              <div className="region-town" />
-              <div className="region-station" />
-              <div className="region-rail" />
-              <div className="region-road" />
-              <div className="region-sea" />
-              <div className="region-river" />
+            <div className="region-map-frame">
+              <img alt={text.regionMap.title} src={regionMapApril} />
             </div>
 
             <footer className="map-modal-footer">
