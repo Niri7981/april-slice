@@ -1,6 +1,7 @@
 import {
   BookOpen,
   CalendarDays,
+  Map,
   Heart,
   Home,
   Moon,
@@ -52,10 +53,18 @@ const copy = {
     ],
     speaker: "四月上旬 · 教室",
     actions: {
+      map: "查看地图",
       diary: "查看日记",
       relationships: "关系温度",
       touch: "轻触碰",
       signal: "留一句信号",
+    },
+    regionMap: {
+      title: "夏末沿海町",
+      subtitle: "四月区域图",
+      close: "关闭地图",
+      hint: "第一版区域地图：山上神社、学校、住宅区、小车站、铁轨和海边路。",
+      places: ["山上神社", "学校", "住宅区", "小车站", "商店街", "海边路"],
     },
     agentEyebrow: "Agent",
     agentName: "朝仓澪",
@@ -129,10 +138,25 @@ const copy = {
     ],
     speaker: "Early April · Classroom",
     actions: {
+      map: "Map",
       diary: "Diary",
       relationships: "Relationship Warmth",
       touch: "Light Touch",
       signal: "Leave a Signal",
+    },
+    regionMap: {
+      title: "Natsusue Coastal Town",
+      subtitle: "April Region Map",
+      close: "Close Map",
+      hint: "First region map: hillside shrine, school, homes, station, railway, and seaside road.",
+      places: [
+        "Hillside Shrine",
+        "School",
+        "Residential Area",
+        "Small Station",
+        "Shopping Street",
+        "Seaside Road",
+      ],
     },
     agentEyebrow: "Agent",
     agentName: "Mio Asakura",
@@ -180,6 +204,7 @@ const copy = {
 
 export function App() {
   const [language, setLanguage] = useState<Language>("zh");
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const text = copy[language];
 
   return (
@@ -271,6 +296,10 @@ export function App() {
         </div>
 
         <section className="action-dock" aria-label="Current play actions">
+          <button onClick={() => setIsMapOpen(true)} type="button">
+            <Map size={17} />
+            {text.actions.map}
+          </button>
           <button type="button">
             <BookOpen size={17} />
             {text.actions.diary}
@@ -362,6 +391,48 @@ export function App() {
           </div>
         </section>
       </aside>
+
+      {isMapOpen ? (
+        <section
+          aria-label={text.regionMap.title}
+          className="map-modal"
+          role="dialog"
+        >
+          <div className="map-modal-card">
+            <header className="map-modal-header">
+              <div>
+                <p className="eyebrow">{text.regionMap.subtitle}</p>
+                <h2>{text.regionMap.title}</h2>
+              </div>
+              <button onClick={() => setIsMapOpen(false)} type="button">
+                {text.regionMap.close}
+              </button>
+            </header>
+
+            <div className="region-map-placeholder">
+              <div className="region-mountains" />
+              <div className="region-forest" />
+              <div className="region-shrine" />
+              <div className="region-school" />
+              <div className="region-town" />
+              <div className="region-station" />
+              <div className="region-rail" />
+              <div className="region-road" />
+              <div className="region-sea" />
+              <div className="region-river" />
+            </div>
+
+            <footer className="map-modal-footer">
+              <p>{text.regionMap.hint}</p>
+              <div className="map-place-list">
+                {text.regionMap.places.map((place) => (
+                  <span key={place}>{place}</span>
+                ))}
+              </div>
+            </footer>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }
