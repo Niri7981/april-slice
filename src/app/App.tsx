@@ -12,10 +12,13 @@ import {
   Waves,
 } from "lucide-react";
 import { useState } from "react";
-import { aprilScenario } from "../game/world";
 import regionMapApril from "../assets/pixel/scenes/region_map_april.png";
+import classroomScene from "../assets/pixel/scenes/scene_classroom_day.png";
+import schoolCorridorScene from "../assets/pixel/scenes/scene_school_corridor_day.png";
+import { aprilScenario } from "../game/world";
 
 type Language = "zh" | "en";
+type SchoolScene = "corridor" | "classroom";
 
 const timeIcons = {
   day: School,
@@ -26,11 +29,15 @@ const timeIcons = {
 const copy = {
   zh: {
     monthChip: "四月 · 白天",
+    sceneNames: {
+      corridor: "走廊",
+      classroom: "教室",
+    },
     timeSlots: [
       {
         id: "day",
         label: "白天",
-        scene: "教室",
+        scene: "学校",
         icon: timeIcons.day,
         active: true,
         note: "现实压力开始显形。",
@@ -52,13 +59,17 @@ const copy = {
         note: "信号更容易被听见。",
       },
     ],
-    speaker: "四月上旬 · 教室",
+    speaker: "四月上旬 · 学校",
     actions: {
       map: "查看地图",
       diary: "查看日记",
       relationships: "关系温度",
       touch: "轻触碰",
       signal: "留一句信号",
+    },
+    sceneHotspots: {
+      enterClassroom: "进入教室",
+      backToCorridor: "回到走廊",
     },
     regionMap: {
       title: "夏末沿海町",
@@ -111,11 +122,15 @@ const copy = {
   },
   en: {
     monthChip: "April · Day",
+    sceneNames: {
+      corridor: "Corridor",
+      classroom: "Classroom",
+    },
     timeSlots: [
       {
         id: "day",
         label: "Day",
-        scene: "Classroom",
+        scene: "School",
         icon: timeIcons.day,
         active: true,
         note: "The pressure of reality starts to show.",
@@ -137,13 +152,17 @@ const copy = {
         note: "Signals are easier to hear after dark.",
       },
     ],
-    speaker: "Early April · Classroom",
+    speaker: "Early April · School",
     actions: {
       map: "Map",
       diary: "Diary",
       relationships: "Relationship Warmth",
       touch: "Light Touch",
       signal: "Leave a Signal",
+    },
+    sceneHotspots: {
+      enterClassroom: "Enter Classroom",
+      backToCorridor: "Back to Corridor",
     },
     regionMap: {
       title: "Natsusue Coastal Town",
@@ -206,7 +225,21 @@ const copy = {
 export function App() {
   const [language, setLanguage] = useState<Language>("zh");
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [activeSchoolScene, setActiveSchoolScene] =
+    useState<SchoolScene>("corridor");
   const text = copy[language];
+  const activeSceneImage =
+    activeSchoolScene === "corridor" ? schoolCorridorScene : classroomScene;
+  const activeSceneName = text.sceneNames[activeSchoolScene];
+  const activeHotspotLabel =
+    activeSchoolScene === "corridor"
+      ? text.sceneHotspots.enterClassroom
+      : text.sceneHotspots.backToCorridor;
+  const handleSceneSwitch = () => {
+    setActiveSchoolScene((currentScene) =>
+      currentScene === "corridor" ? "classroom" : "corridor",
+    );
+  };
 
   return (
     <main className="shell">
@@ -240,7 +273,15 @@ export function App() {
           </div>
         </div>
 
-        <div className="pixel-stage" aria-label="Seaside pixel stage">
+        <div
+          className="pixel-stage"
+          aria-label={`${activeSceneName} pixel stage`}
+        >
+          <img
+            alt={activeSceneName}
+            className="scene-stage-image"
+            src={activeSceneImage}
+          />
           <nav className="map-hud time-strip" aria-label="April time slots">
             {text.timeSlots.map((slot) => {
               const Icon = slot.icon;
@@ -262,30 +303,18 @@ export function App() {
           </nav>
 
           <div className="map-label">
-            <span>{text.speaker}</span>
+            <span>
+              {text.speaker} · {activeSceneName}
+            </span>
           </div>
 
-          <div className="sea" />
-          <div className="shoreline" />
-          <div className="grass grass-top" />
-          <div className="grass grass-bottom" />
-          <div className="road road-left" />
-          <div className="road road-bottom" />
-          <div className="station">
-            <div className="station-roof" />
-            <div className="station-room" />
-            <div className="bench" />
-            <div className="vending-machine" />
-          </div>
-          <div className="tracks" />
-          <div className="lamp lamp-left" />
-          <div className="lamp lamp-right" />
-          <div className="tree" />
-          <div className="topdown-avatar">
-            <span className="avatar-hair" />
-            <span className="avatar-face" />
-            <span className="avatar-body" />
-          </div>
+          <button
+            className={`scene-hotspot scene-hotspot-${activeSchoolScene}`}
+            onClick={handleSceneSwitch}
+            type="button"
+          >
+            {activeHotspotLabel}
+          </button>
         </div>
 
         <div className="text-box">
