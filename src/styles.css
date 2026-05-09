@@ -246,6 +246,15 @@ h2 {
   image-rendering: pixelated;
 }
 
+.pixel-stage:focus {
+  outline: 4px solid rgba(197, 147, 82, 0.85);
+  outline-offset: 4px;
+}
+
+.pixel-stage.is-touch-mode {
+  cursor: crosshair;
+}
+
 .scene-stage-image {
   position: absolute;
   inset: 0;
@@ -269,7 +278,8 @@ h2 {
 }
 
 .map-hud,
-.map-label {
+.map-label,
+.echo-hud {
   position: absolute;
 }
 
@@ -288,6 +298,50 @@ h2 {
   background: rgba(244, 237, 222, 0.92);
   box-shadow: 4px 4px 0 var(--ink);
   padding: 8px 10px;
+}
+
+.echo-hud {
+  z-index: 3;
+  right: 14px;
+  top: 132px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  width: min(310px, calc(100% - 28px));
+  gap: 12px;
+  border: 3px solid var(--ink);
+  background: rgba(244, 237, 222, 0.92);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 9px 10px;
+}
+
+.echo-hud span {
+  display: block;
+  font-weight: 700;
+}
+
+.echo-hud small {
+  display: block;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.echo-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.echo-dots span {
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--ink);
+  background: var(--gold);
+  box-shadow: 2px 2px 0 rgba(45, 42, 36, 0.28);
+}
+
+.echo-dots span.is-used {
+  background: rgba(45, 42, 36, 0.18);
+  box-shadow: inset 2px 2px 0 rgba(45, 42, 36, 0.18);
 }
 
 .scene-hotspot {
@@ -320,6 +374,177 @@ h2 {
 .scene-hotspot-classroom {
   top: 14%;
   right: 3.5%;
+}
+
+.scene-hotspot-homeRoom {
+  right: 5.5%;
+  bottom: 19%;
+}
+
+.player-sprite {
+  position: absolute;
+  z-index: 2;
+  width: 56px;
+  height: 96px;
+  image-rendering: pixelated;
+  transform: translate(-50%, -92%);
+  filter: drop-shadow(4px 5px 0 rgba(24, 19, 16, 0.38));
+}
+
+.player-sprite span {
+  position: absolute;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.player-shadow {
+  left: 4px;
+  bottom: -4px;
+  width: 22px;
+  height: 7px;
+  background: rgba(21, 18, 17, 0.4);
+  transform: skewX(-12deg);
+}
+
+.player-hair {
+  top: 0;
+  left: 5px;
+  width: 20px;
+  height: 15px;
+  background: #231f22;
+  box-shadow:
+    -3px 4px 0 #231f22,
+    8px 4px 0 #231f22,
+    3px 10px 0 #231f22;
+}
+
+.player-face {
+  top: 12px;
+  left: 8px;
+  width: 14px;
+  height: 10px;
+  background: #d3a17c;
+  box-shadow:
+    -3px -2px 0 #b88466,
+    9px -1px 0 #b88466;
+}
+
+.player-body {
+  top: 23px;
+  left: 6px;
+  width: 18px;
+  height: 17px;
+  background:
+    linear-gradient(#e8dfd0 0 5px, #30475a 5px 100%);
+  box-shadow:
+    -4px 5px 0 #26394a,
+    4px 5px 0 #26394a;
+}
+
+.player-leg {
+  bottom: 0;
+  width: 7px;
+  height: 8px;
+  background: #252a33;
+}
+
+.player-leg-left {
+  left: 7px;
+}
+
+.player-leg-right {
+  right: 7px;
+}
+
+.facing-left {
+  transform: translate(-50%, -92%) scaleX(-1);
+}
+
+.facing-up .player-face {
+  background: #231f22;
+  box-shadow:
+    -3px -2px 0 #231f22,
+    9px -1px 0 #231f22;
+}
+
+.facing-up .player-body {
+  background:
+    linear-gradient(#283c4d 0 4px, #30475a 4px 100%);
+}
+
+.facing-right .player-hair,
+.facing-left .player-hair {
+  box-shadow:
+    -3px 4px 0 #231f22,
+    6px 4px 0 #231f22,
+    10px 11px 0 #231f22;
+}
+
+.is-walking.walk-frame-1 .player-leg-left,
+.is-walking.walk-frame-3 .player-leg-right {
+  transform: translateY(-3px);
+}
+
+.is-walking.walk-frame-1 .player-leg-right,
+.is-walking.walk-frame-3 .player-leg-left {
+  transform: translateY(2px);
+}
+
+.is-walking.walk-frame-1 .player-body,
+.is-walking.walk-frame-3 .player-body {
+  transform: translateY(-1px);
+}
+
+.floating-note {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 42%;
+  max-width: 230px;
+  border: 3px solid var(--ink);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.28) 0 0),
+    #f2dfaf;
+  box-shadow: 4px 4px 0 rgba(45, 42, 36, 0.32);
+  padding: 10px 12px;
+  line-height: 1.45;
+  transform: translate(-50%, -50%) rotate(-2deg);
+  animation: note-drift 4.2s steps(8, end) forwards;
+}
+
+.floating-note::before {
+  position: absolute;
+  inset: 5px;
+  border: 2px dashed rgba(45, 42, 36, 0.24);
+  content: "";
+  pointer-events: none;
+}
+
+.touch-zone {
+  position: absolute;
+  z-index: 5;
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(244, 237, 222, 0.72) 0 4px, transparent 5px),
+    radial-gradient(circle at 30% 36%, rgba(197, 147, 82, 0.58) 0 5px, transparent 6px),
+    radial-gradient(circle at 70% 62%, rgba(197, 147, 82, 0.42) 0 4px, transparent 5px);
+  cursor: crosshair;
+  opacity: 0.72;
+  padding: 0;
+  animation: touch-shimmer 1.7s steps(4, end) infinite;
+}
+
+.touch-zone::before {
+  position: absolute;
+  inset: 12%;
+  border: 3px dashed rgba(244, 237, 222, 0.46);
+  content: "";
+  box-shadow: 0 0 0 4px rgba(197, 147, 82, 0.12);
+}
+
+.touch-zone:hover {
+  opacity: 1;
+  transform: translateY(-2px);
 }
 
 .text-box,
@@ -392,6 +617,184 @@ h2 {
   transform: translate(-2px, -2px);
   background: #e6cfa2;
   box-shadow: 6px 6px 0 var(--paper-shadow), 10px 10px 0 var(--ink);
+}
+
+.action-dock button.is-active {
+  transform: translate(-2px, -2px);
+  background: #e6cfa2;
+  box-shadow: 6px 6px 0 var(--paper-shadow), 10px 10px 0 var(--ink);
+}
+
+.action-dock button:disabled,
+.note-footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.note-modal {
+  position: fixed;
+  z-index: 25;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(24, 30, 26, 0.68);
+}
+
+.touch-confirm-modal {
+  position: fixed;
+  z-index: 24;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(24, 30, 26, 0.42);
+}
+
+.touch-confirm-card {
+  width: min(430px, 92vw);
+  border: 4px solid var(--ink);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.16) 0 0),
+    rgba(244, 237, 222, 0.97);
+  box-shadow: 8px 8px 0 var(--paper-shadow), 14px 14px 0 var(--ink);
+  padding: 20px;
+}
+
+.touch-confirm-card h2 {
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+
+.touch-confirm-card p:last-of-type {
+  line-height: 1.6;
+}
+
+.touch-confirm-actions {
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.touch-confirm-actions button {
+  border: 3px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  padding: 9px 12px;
+}
+
+.touch-confirm-actions button:last-child {
+  background: #e6cfa2;
+}
+
+.note-paper {
+  width: min(520px, 92vw);
+  border: 4px solid var(--ink);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 31px,
+      rgba(166, 95, 58, 0.16) 31px 34px
+    ),
+    linear-gradient(90deg, rgba(166, 95, 58, 0.18) 0 5px, transparent 5px),
+    #f2dfaf;
+  box-shadow: 8px 8px 0 var(--paper-shadow), 15px 15px 0 var(--ink);
+  padding: 22px;
+  transform: rotate(-1deg);
+}
+
+.note-paper h2 {
+  margin-bottom: 0;
+}
+
+.note-hint {
+  margin: 14px 0;
+  line-height: 1.65;
+}
+
+.note-paper textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  border: 3px solid var(--ink);
+  background: rgba(255, 251, 230, 0.56);
+  color: var(--ink);
+  box-shadow: inset 4px 4px 0 rgba(45, 42, 36, 0.08);
+  line-height: 1.8;
+  padding: 14px;
+  animation: handwriting-waver 1.8s steps(2, end) infinite;
+}
+
+.note-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.note-footer div {
+  display: flex;
+  gap: 10px;
+}
+
+.note-footer button {
+  border: 3px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  padding: 9px 12px;
+}
+
+.note-footer button:last-child {
+  background: #e6cfa2;
+}
+
+@keyframes note-drift {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%) rotate(-4deg);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-36%, -70%) rotate(2deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-24%, -96%) rotate(-1deg);
+  }
+}
+
+@keyframes handwriting-waver {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(1px, 0);
+  }
+}
+
+@keyframes touch-shimmer {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(244, 237, 222, 0));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgba(244, 237, 222, 0.72));
+  }
 }
 
 .control-panel {
