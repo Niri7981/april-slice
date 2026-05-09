@@ -317,6 +317,25 @@ Definition of done:
 - Should the player know when the agent resists them, or infer it from behavior?
 - Should extra Echo Windows be shown explicitly, or implied through text like "she seems willing to hear one more thing"?
 
+## Presentation Note
+
+For now, priority stays on core functionality: scene flow, Echo interaction, agent response structure, Day 1 pacing, and the 30-day framework.
+
+Visual motion polish should come after the main loop is stable. The target feeling is closer to pixel-game frame language than generic web animation:
+
+- Character life should eventually come from sprite-frame animation.
+- Important environmental motion should eventually come from low-frame pixel animation or discrete layer swaps.
+- Time-of-day atmosphere should ideally be expressed through dedicated scene variants or pixel-art overlays, not only smooth CSS effects.
+
+Short-term rule:
+
+```text
+first make the game loop work
+then make the world breathe in a pixel-native way
+```
+
+This means we should avoid over-investing in temporary CSS-heavy environmental effects before the core playable structure is complete.
+
 ## Immediate Next Step
 
 Build Stage 1: Echo Interaction v0.2.

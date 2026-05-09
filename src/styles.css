@@ -189,19 +189,14 @@ h2 {
   white-space: nowrap;
 }
 
-.time-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
 .time-card {
   border: 3px solid var(--ink);
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0 25%, transparent 25%),
     var(--paper);
   box-shadow: 4px 4px 0 var(--paper-shadow), 8px 8px 0 var(--ink);
-  padding: 8px;
+  min-height: 108px;
+  padding: 10px 12px;
 }
 
 .time-card.is-active {
@@ -215,20 +210,23 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: var(--rust);
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
 .time-card strong {
   display: block;
-  margin-bottom: 4px;
-  font-size: 0.92rem;
+  margin-bottom: 6px;
+  font-size: 0.96rem;
+  line-height: 1.15;
 }
 
 .time-card small,
 .relationship small {
   display: block;
+  font-size: 0.68rem;
   line-height: 1.45;
 }
 
@@ -265,6 +263,77 @@ h2 {
   image-rendering: pixelated;
 }
 
+.scene-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.scene-ambient-home .ambient-sunlight {
+  position: absolute;
+  left: 8%;
+  bottom: 10%;
+  width: 26%;
+  height: 42%;
+  background:
+    linear-gradient(180deg, rgba(255, 244, 198, 0.08) 0%, rgba(255, 214, 107, 0.24) 100%);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  clip-path: polygon(0 0, 84% 0, 100% 100%, 18% 100%);
+  animation: sunlight-drift 10s ease-in-out infinite alternate;
+}
+
+.scene-ambient-afternoon .ambient-sunlight {
+  background:
+    linear-gradient(180deg, rgba(255, 214, 146, 0.12) 0%, rgba(255, 168, 67, 0.3) 100%);
+  opacity: 0.92;
+}
+
+.scene-ambient-night .ambient-sunlight {
+  background:
+    linear-gradient(180deg, rgba(160, 190, 255, 0.06) 0%, rgba(120, 160, 255, 0.18) 100%);
+  opacity: 0.64;
+}
+
+.ambient-mote {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 242, 214, 0.72);
+  box-shadow: 0 0 10px rgba(255, 242, 214, 0.46);
+  opacity: 0.65;
+}
+
+.scene-ambient-night .ambient-mote {
+  background: rgba(190, 215, 255, 0.64);
+  box-shadow: 0 0 8px rgba(190, 215, 255, 0.32);
+}
+
+.ambient-mote-1 {
+  left: 18%;
+  top: 38%;
+  animation: mote-float-1 12s linear infinite;
+}
+
+.ambient-mote-2 {
+  left: 23%;
+  top: 48%;
+  width: 7px;
+  height: 7px;
+  animation: mote-float-2 10s linear infinite;
+}
+
+.ambient-mote-3 {
+  left: 30%;
+  top: 56%;
+  width: 6px;
+  height: 6px;
+  animation: mote-float-3 14s linear infinite;
+}
+
 .pixel-stage::after {
   position: absolute;
   inset: 0;
@@ -287,7 +356,69 @@ h2 {
   z-index: 3;
   top: 12px;
   left: 12px;
-  width: min(640px, calc(100% - 24px));
+  display: grid;
+  grid-template-columns: 178px minmax(0, 1fr);
+  align-items: start;
+  width: min(772px, calc(100% - 24px));
+  gap: 10px;
+}
+
+.clock-hud {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  align-items: center;
+  gap: 8px;
+  min-height: 108px;
+  border: 3px solid var(--ink);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0 25%, transparent 25%),
+    rgba(244, 237, 222, 0.94);
+  box-shadow: 4px 4px 0 var(--paper-shadow), 8px 8px 0 var(--ink);
+  padding: 10px 12px;
+}
+
+.clock-hud-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.clock-hud-copy span {
+  display: block;
+  text-align: left;
+}
+
+.clock-hud-copy span {
+  color: var(--rust);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.clock-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+}
+
+.clock-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(3px 5px 0 rgba(45, 42, 36, 0.22));
+}
+
+.time-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .map-label {
@@ -389,6 +520,10 @@ h2 {
   image-rendering: pixelated;
   transform: translate(-50%, -92%);
   filter: drop-shadow(4px 5px 0 rgba(24, 19, 16, 0.38));
+}
+
+.player-sprite:not(.is-walking) {
+  animation: idle-breath 2.6s ease-in-out infinite;
 }
 
 .player-sprite span {
@@ -797,6 +932,80 @@ h2 {
   }
 }
 
+@keyframes sunlight-drift {
+  0% {
+    transform: translate(0, 0) scaleX(1);
+    opacity: 0.74;
+  }
+
+  100% {
+    transform: translate(2.5%, -1.5%) scaleX(1.04);
+    opacity: 0.9;
+  }
+}
+
+@keyframes mote-float-1 {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.15;
+  }
+
+  20%,
+  80% {
+    opacity: 0.72;
+  }
+
+  100% {
+    transform: translate(24px, -42px);
+    opacity: 0;
+  }
+}
+
+@keyframes mote-float-2 {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.2;
+  }
+
+  25%,
+  78% {
+    opacity: 0.58;
+  }
+
+  100% {
+    transform: translate(18px, -34px);
+    opacity: 0;
+  }
+}
+
+@keyframes mote-float-3 {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.14;
+  }
+
+  30%,
+  82% {
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: translate(20px, -48px);
+    opacity: 0;
+  }
+}
+
+@keyframes idle-breath {
+  0%,
+  100% {
+    transform: translate(-50%, -92%);
+  }
+
+  50% {
+    transform: translate(-50%, -93.6%);
+  }
+}
+
 .control-panel {
   display: flex;
   flex-direction: column;
@@ -1068,6 +1277,21 @@ h2 {
 
   .top-controls {
     justify-content: start;
+  }
+
+  .map-hud {
+    grid-template-columns: 1fr;
+    width: min(520px, calc(100% - 24px));
+  }
+
+  .clock-hud {
+    grid-template-columns: 1fr 82px;
+    min-height: 98px;
+  }
+
+  .clock-face {
+    width: 82px;
+    height: 82px;
   }
 
   .pixel-stage {

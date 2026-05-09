@@ -6,7 +6,6 @@ import {
   Home,
   Moon,
   Radio,
-  School,
   Sparkles,
   TrainFront,
   Waves,
@@ -14,12 +13,18 @@ import {
 import { useEffect, useRef, useState } from "react";
 import regionMapApril from "../assets/pixel/scenes/region_map_april.png";
 import classroomScene from "../assets/pixel/scenes/scene_classroom_day.png";
+import homeRoomAfternoonScene from "../assets/pixel/scenes/scene_home_room_afternoon.png";
 import homeRoomScene from "../assets/pixel/scenes/scene_home_room_day.png";
+import homeRoomNightScene from "../assets/pixel/scenes/scene_home_room_night.png";
 import schoolCorridorScene from "../assets/pixel/scenes/scene_school_corridor_day.png";
+import clockAfternoonImage from "../assets/pixel/ui/clock_afternoon.png";
+import clockMorningImage from "../assets/pixel/ui/clock_morning.png";
+import clockNightImage from "../assets/pixel/ui/clock_night.png";
 import { aprilScenario } from "../game/world";
 
 type Language = "zh" | "en";
 type SceneId = "homeRoom" | "corridor" | "classroom";
+type TimeOfDay = "morning" | "afternoon" | "night";
 type Direction = "up" | "down" | "left" | "right";
 
 type PlayerSnapshot = {
@@ -48,6 +53,7 @@ type SceneMap = {
   walkBounds: Rect;
   transitions: SceneTransition[];
   touchZones?: TouchZone[];
+  timeImages?: Partial<Record<TimeOfDay, string>>;
 };
 
 type TouchZone = Rect & {
@@ -71,6 +77,14 @@ type AutoMovePlan = {
   responseText: string;
 };
 
+type TimeSlotCopy = {
+  id: TimeOfDay;
+  label: string;
+  scene: string;
+  icon: typeof Home;
+  note: string;
+};
+
 const initialPlayer: PlayerSnapshot = {
   x: 50,
   y: 67,
@@ -82,6 +96,11 @@ const initialPlayer: PlayerSnapshot = {
 const sceneMaps: Record<SceneId, SceneMap> = {
   homeRoom: {
     image: homeRoomScene,
+    timeImages: {
+      morning: homeRoomScene,
+      afternoon: homeRoomAfternoonScene,
+      night: homeRoomNightScene,
+    },
     spawn: {
       x: 50,
       y: 67,
@@ -225,44 +244,71 @@ const playerSpeed = 22;
 const baseEchoCount = 2;
 const agentGrantedEchoWindows = 1;
 const noteEchoLimit = 30;
+const dayDurationMs = 5 * 60 * 1000;
+const timeFlowStepMs = dayDurationMs / 3;
 
 const timeIcons = {
-  day: School,
-  afterSchool: TrainFront,
+  morning: Home,
+  afternoon: TrainFront,
   night: Moon,
 };
 
+const timeClock = {
+  morning: {
+    display: "09:00",
+    image: clockMorningImage,
+  },
+  afternoon: {
+    display: "15:00",
+    image: clockAfternoonImage,
+  },
+  night: {
+    display: "23:00",
+    image: clockNightImage,
+  },
+} satisfies Record<
+  TimeOfDay,
+  {
+    display: string;
+    image: string;
+  }
+>;
+
 const copy = {
   zh: {
-    monthChip: "四月 · 白天",
+    monthChipPrefix: "四月",
+    dayLabel: "第 {day} 天",
+    clockLabel: "今日钟面",
+    timeNames: {
+      morning: "早晨",
+      afternoon: "下午",
+      night: "夜里",
+    },
     sceneNames: {
-      homeRoom: "早晨房间",
+      homeRoom: "房间",
       corridor: "走廊",
       classroom: "教室",
     },
     timeSlots: [
       {
-        id: "day",
-        label: "白天",
-        scene: "学校",
-        icon: timeIcons.day,
-        active: true,
-        note: "现实压力开始显形。",
+        id: "morning",
+        label: "早晨",
+        scene: "房间",
+        icon: timeIcons.morning,
+        note: "光刚刚照进来，一天还没有真正开口。",
       },
       {
-        id: "after-school",
-        label: "放学后",
-        scene: "海边路",
-        icon: timeIcons.afterSchool,
-        active: false,
-        note: "关系会在路上偏移。",
+        id: "afternoon",
+        label: "下午",
+        scene: "房间",
+        icon: timeIcons.afternoon,
+        note: "影子被拉长了，心思也会慢一点偏开。",
       },
       {
         id: "night",
         label: "夜里",
         scene: "房间",
         icon: timeIcons.night,
-        active: false,
         note: "信号更容易被听见。",
       },
     ],
@@ -366,35 +412,39 @@ const copy = {
     ],
   },
   en: {
-    monthChip: "April · Day",
+    monthChipPrefix: "April",
+    dayLabel: "Day {day}",
+    clockLabel: "Today's Clock",
+    timeNames: {
+      morning: "Morning",
+      afternoon: "Afternoon",
+      night: "Night",
+    },
     sceneNames: {
-      homeRoom: "Morning Room",
+      homeRoom: "Room",
       corridor: "Corridor",
       classroom: "Classroom",
     },
     timeSlots: [
       {
-        id: "day",
-        label: "Day",
-        scene: "School",
-        icon: timeIcons.day,
-        active: true,
-        note: "The pressure of reality starts to show.",
+        id: "morning",
+        label: "Morning",
+        scene: "Room",
+        icon: timeIcons.morning,
+        note: "The light has only just entered. The day has not fully spoken yet.",
       },
       {
-        id: "after-school",
-        label: "After School",
-        scene: "Seaside Road",
-        icon: timeIcons.afterSchool,
-        active: false,
-        note: "Relationships begin to drift on the way home.",
+        id: "afternoon",
+        label: "Afternoon",
+        scene: "Room",
+        icon: timeIcons.afternoon,
+        note: "Shadows stretch longer, and thoughts drift a little wider.",
       },
       {
         id: "night",
         label: "Night",
         scene: "Bedroom",
         icon: timeIcons.night,
-        active: false,
         note: "Signals are easier to hear after dark.",
       },
     ],
@@ -510,6 +560,8 @@ export function App() {
   const [language, setLanguage] = useState<Language>("zh");
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [activeScene, setActiveScene] = useState<SceneId>("homeRoom");
+  const [activeTimeOfDay, setActiveTimeOfDay] = useState<TimeOfDay>("morning");
+  const [gameDay, setGameDay] = useState(1);
   const [playerView, setPlayerView] = useState<PlayerSnapshot>(initialPlayer);
   const [usedEchoes, setUsedEchoes] = useState(0);
   const [isNoteEchoOpen, setIsNoteEchoOpen] = useState(false);
@@ -528,9 +580,15 @@ export function App() {
   const playerRef = useRef<PlayerSnapshot>(initialPlayer);
   const hasTransitionedRef = useRef(false);
   const autoMovePlanRef = useRef<AutoMovePlan | null>(autoMovePlan);
+  const dayFlowStartRef = useRef<number | null>(null);
+  const activeTimeOfDayRef = useRef<TimeOfDay>("morning");
   const text = copy[language];
   const activeSceneMap = sceneMaps[activeScene];
   const activeSceneName = text.sceneNames[activeScene];
+  const activeSceneImage =
+    activeSceneMap.timeImages?.[activeTimeOfDay] ?? activeSceneMap.image;
+  const monthChip = `${text.monthChipPrefix} · ${text.dayLabel.replace("{day}", String(gameDay))}`;
+  const activeClock = timeClock[activeTimeOfDay];
   const totalEchoes = baseEchoCount + agentGrantedEchoWindows;
   const remainingEchoes = totalEchoes - usedEchoes;
   const trimmedNote = noteDraft.trim();
@@ -545,6 +603,13 @@ export function App() {
     }
 
     setActiveScene(primaryTransition.target);
+  };
+  const transitionTimeOfDay = (timeOfDay: TimeOfDay, note: string) => {
+    setActiveTimeOfDay(timeOfDay);
+    setSceneText(note);
+    setIsTouchMode(false);
+    setPendingTouchZone(null);
+    setIsNoteEchoOpen(false);
   };
   const openNoteEcho = () => {
     if (remainingEchoes <= 0) {
@@ -626,6 +691,10 @@ export function App() {
   }, [activeScene]);
 
   useEffect(() => {
+    activeTimeOfDayRef.current = activeTimeOfDay;
+  }, [activeTimeOfDay]);
+
+  useEffect(() => {
     autoMovePlanRef.current = autoMovePlan;
   }, [autoMovePlan]);
 
@@ -646,6 +715,58 @@ export function App() {
     setPendingTouchZone(null);
     setIsTouchMode(false);
   }, [activeScene]);
+
+  useEffect(() => {
+    const slots = text.timeSlots as TimeSlotCopy[];
+    const findSlot = (timeOfDay: TimeOfDay) =>
+      slots.find((slot) => slot.id === timeOfDay);
+
+    let animationFrame = 0;
+
+    const tickTime = (timestamp: number) => {
+      if (dayFlowStartRef.current === null) {
+        dayFlowStartRef.current = timestamp;
+      }
+
+      const elapsed = timestamp - dayFlowStartRef.current;
+      const normalized = elapsed % dayDurationMs;
+      const nextTimeOfDay: TimeOfDay =
+        normalized < timeFlowStepMs
+          ? "morning"
+          : normalized < timeFlowStepMs * 2
+            ? "afternoon"
+            : "night";
+
+      if (activeTimeOfDayRef.current !== nextTimeOfDay) {
+        const nextSlot = findSlot(nextTimeOfDay);
+
+        if (nextSlot) {
+          transitionTimeOfDay(nextTimeOfDay, nextSlot.note);
+        }
+      }
+
+      if (elapsed >= dayDurationMs) {
+        dayFlowStartRef.current = timestamp;
+        setGameDay((current) => current + 1);
+        setUsedEchoes(0);
+        setSentNote("");
+        setActiveScene("homeRoom");
+        setSceneText(
+          language === "zh"
+            ? "新的一天又轻轻开始了。"
+            : "A new day has quietly begun again.",
+        );
+      }
+
+      animationFrame = window.requestAnimationFrame(tickTime);
+    };
+
+    animationFrame = window.requestAnimationFrame(tickTime);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [language, text.timeSlots]);
 
   useEffect(() => {
     const trackedKeys = new Set([
@@ -806,7 +927,7 @@ export function App() {
             </div>
             <span className="month-chip">
               <CalendarDays size={16} />
-              {text.monthChip}
+              {monthChip}
             </span>
           </div>
         </div>
@@ -821,27 +942,51 @@ export function App() {
           <img
             alt={activeSceneName}
             className="scene-stage-image"
-            src={activeSceneMap.image}
+            src={activeSceneImage}
           />
-          <nav className="map-hud time-strip" aria-label="April time slots">
-            {text.timeSlots.map((slot) => {
-              const Icon = slot.icon;
+          {activeScene === "homeRoom" ? (
+            <div
+              aria-hidden="true"
+              className={`scene-ambient scene-ambient-home scene-ambient-${activeTimeOfDay}`}
+            >
+              <span className="ambient-sunlight" />
+              <span className="ambient-mote ambient-mote-1" />
+              <span className="ambient-mote ambient-mote-2" />
+              <span className="ambient-mote ambient-mote-3" />
+            </div>
+          ) : null}
+          <div className="map-hud">
+            <aside className="clock-hud" aria-label={text.clockLabel}>
+              <div className="clock-hud-copy">
+                <span>{text.clockLabel}</span>
+              </div>
+              <div className="clock-face">
+                <img alt={activeClock.display} src={activeClock.image} />
+              </div>
+            </aside>
 
-              return (
-                <article
-                  className={`time-card ${slot.active ? "is-active" : ""}`}
-                  key={slot.id}
-                >
-                  <div className="time-card-top">
-                    <Icon size={18} />
-                    <span>{slot.label}</span>
-                  </div>
-                  <strong>{slot.scene}</strong>
-                  <small>{slot.note}</small>
-                </article>
-              );
-            })}
-          </nav>
+            <nav className="time-strip" aria-label="April time slots">
+              {text.timeSlots.map((slot) => {
+                const Icon = slot.icon;
+
+                return (
+                  <article
+                    className={`time-card ${
+                      activeTimeOfDay === slot.id ? "is-active" : ""
+                    }`}
+                    key={slot.id}
+                  >
+                    <div className="time-card-top">
+                      <Icon size={18} />
+                      <span>{slot.label}</span>
+                    </div>
+                    <strong>{slot.scene}</strong>
+                    <small>{slot.note}</small>
+                  </article>
+                );
+              })}
+            </nav>
+          </div>
 
           <div className="map-label">
             <span>
