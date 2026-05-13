@@ -357,6 +357,21 @@ const copy = {
       sent: "纸条像被晨光折了一下，轻轻落进这一天。澪没有立刻看它，只是停了一瞬。",
       diaryPreview: "夜里，她也许会在日记里误读、珍藏，或假装没有看见这句话。",
     },
+    diaryModal: {
+      eyebrow: "夜间日记",
+      title: "澪的日记",
+      hint: "先用 mock 内容占位，重点看夜里翻开纸页时的感觉。",
+      entryDate: "四月 / 第一天 / 夜里 23:00",
+      paragraphs: [
+        "今天在门口站了一会儿。明明和平常一样，手碰到门把的时候，却觉得屋子里还有什么没说完。",
+        "教室窗边的光有点亮，亮得像有人从很远的地方看了我一下。我没有回头，只是假装在看黑板。",
+        "如果真的有人在靠近我，希望不要靠得太急。太急的话，我又会像平常一样先退开半步。",
+      ],
+      traceLabel: "今天留下的痕迹",
+      mockTrace: "她记不清那句话是不是写给她的，只记得纸边像晨光一样薄。",
+      footer: "以后这里可以换成每天自动生成的日记内容。",
+      close: "合上日记",
+    },
     sceneHotspots: {
       leaveHome: "出门上学",
       enterClassroom: "进入教室",
@@ -493,6 +508,22 @@ const copy = {
       sent: "The note folds once in the morning light and slips into the day. Mio does not read it right away; she only pauses.",
       diaryPreview: "Tonight, she may misread it, keep it, or pretend she never saw the sentence.",
     },
+    diaryModal: {
+      eyebrow: "Night Diary",
+      title: "Mio's Diary",
+      hint: "Mock text for now. The main goal here is the feeling of opening a larger diary page at night.",
+      entryDate: "April / Day 1 / 23:00",
+      paragraphs: [
+        "I stood by the door a little too long today. Everything was ordinary, but when my hand touched the handle it felt like the room had not finished saying something.",
+        "The classroom window was brighter than it should have been, as if someone from very far away had looked at me once. I did not turn around. I only pretended to watch the board.",
+        "If someone is really trying to come closer, I hope they do not do it too quickly. If they do, I will probably step back the way I always do.",
+      ],
+      traceLabel: "Trace Left Today",
+      mockTrace:
+        "She cannot quite remember whether the sentence was meant for her, only that the edge of the note felt as thin as morning light.",
+      footer: "Later, this can become the auto-written diary entry for each day.",
+      close: "Close Diary",
+    },
     sceneHotspots: {
       leaveHome: "Leave for School",
       enterClassroom: "Enter Classroom",
@@ -559,6 +590,7 @@ const copy = {
 export function App() {
   const [language, setLanguage] = useState<Language>("zh");
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [isDiaryOpen, setIsDiaryOpen] = useState(false);
   const [activeScene, setActiveScene] = useState<SceneId>("homeRoom");
   const [activeTimeOfDay, setActiveTimeOfDay] = useState<TimeOfDay>("morning");
   const [gameDay, setGameDay] = useState(1);
@@ -610,6 +642,7 @@ export function App() {
     setIsTouchMode(false);
     setPendingTouchZone(null);
     setIsNoteEchoOpen(false);
+    setIsDiaryOpen(false);
   };
   const openNoteEcho = () => {
     if (remainingEchoes <= 0) {
@@ -1075,7 +1108,7 @@ export function App() {
             <Map size={17} />
             {text.actions.map}
           </button>
-          <button type="button">
+          <button onClick={() => setIsDiaryOpen(true)} type="button">
             <BookOpen size={17} />
             {text.actions.diary}
           </button>
@@ -1244,6 +1277,61 @@ export function App() {
                   type="button"
                 >
                   {text.noteEcho.send}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {isDiaryOpen ? (
+        <section
+          aria-label={text.diaryModal.title}
+          className="note-modal"
+          role="dialog"
+        >
+          <div className="note-paper diary-paper">
+            <header className="diary-paper-header">
+              <div>
+                <p className="eyebrow">{text.diaryModal.eyebrow}</p>
+                <h2>{text.diaryModal.title}</h2>
+              </div>
+              <button onClick={() => setIsDiaryOpen(false)} type="button">
+                {text.diaryModal.close}
+              </button>
+            </header>
+
+            <div className="diary-meta">
+              <span>{monthChip}</span>
+              <span>{text.timeNames[activeTimeOfDay]}</span>
+              <span>{text.sceneNames[activeScene]}</span>
+            </div>
+
+            <p className="note-hint">{text.diaryModal.hint}</p>
+
+            <article className="diary-entry-card">
+              <p className="diary-entry-date">{text.diaryModal.entryDate}</p>
+              <div className="diary-entry-body">
+                {text.diaryModal.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+            </article>
+
+            <aside className="diary-note-preview">
+              <p className="eyebrow">{text.diaryModal.traceLabel}</p>
+              <p>
+                {sentNote
+                  ? `"${sentNote}"`
+                  : text.diaryModal.mockTrace}
+              </p>
+            </aside>
+
+            <div className="note-footer diary-footer">
+              <small>{text.diaryModal.footer}</small>
+              <div>
+                <button onClick={() => setIsDiaryOpen(false)} type="button">
+                  {text.diaryModal.close}
                 </button>
               </div>
             </div>

@@ -841,8 +841,97 @@ h2 {
   transform: rotate(-1deg);
 }
 
+.diary-paper {
+  width: min(760px, 94vw);
+  min-height: min(78vh, 760px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 245, 214, 0.45) 0 18%, transparent 18%),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 31px,
+      rgba(92, 138, 150, 0.11) 31px 33px
+    ),
+    linear-gradient(90deg, rgba(166, 95, 58, 0.2) 0 6px, transparent 6px),
+    #f1dfb2;
+  transform: rotate(-0.5deg);
+}
+
 .note-paper h2 {
   margin-bottom: 0;
+}
+
+.diary-paper-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.diary-paper-header button {
+  border: 3px solid var(--ink);
+  background: rgba(244, 237, 222, 0.92);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  padding: 9px 12px;
+}
+
+.diary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.diary-meta span {
+  border: 2px solid rgba(45, 42, 36, 0.68);
+  background: rgba(255, 251, 230, 0.56);
+  padding: 6px 10px;
+  font-size: 0.76rem;
+}
+
+.diary-entry-card {
+  flex: 1;
+  border: 3px solid rgba(45, 42, 36, 0.9);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.24) 0 0),
+    rgba(255, 248, 232, 0.62);
+  box-shadow: inset 0 0 0 3px rgba(45, 42, 36, 0.08);
+  padding: 18px 18px 8px;
+}
+
+.diary-entry-date {
+  margin-bottom: 12px;
+  color: var(--rust);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.diary-entry-body {
+  display: grid;
+  gap: 14px;
+  line-height: 1.95;
+}
+
+.diary-entry-body p {
+  margin: 0;
+  text-indent: 1.5em;
+}
+
+.diary-note-preview {
+  border: 3px dashed rgba(45, 42, 36, 0.66);
+  background: rgba(244, 237, 222, 0.58);
+  padding: 14px 16px;
+}
+
+.diary-note-preview p:last-child {
+  line-height: 1.7;
+}
+
+.diary-footer {
+  margin-top: auto;
 }
 
 .note-hint {
@@ -1301,6 +1390,12 @@ h2 {
   .time-strip,
   .action-dock {
     grid-template-columns: 1fr;
+  }
+
+  .diary-paper-header,
+  .diary-footer {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .map-modal-footer,
