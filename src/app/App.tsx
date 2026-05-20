@@ -66,7 +66,16 @@ type SceneMap = {
 
 type TouchZone = Rect & {
   id: string;
-  labelKey: "window" | "desk" | "bag" | "bed" | "door";
+  labelKey:
+    | "window"
+    | "desk"
+    | "bag"
+    | "bed"
+    | "door"
+    | "board"
+    | "bench"
+    | "rail"
+    | "water";
   approachPoint: {
     x: number;
     y: number;
@@ -76,7 +85,16 @@ type TouchZone = Rect & {
     | "homeDesk"
     | "homeBag"
     | "homeBed"
-    | "homeDoor";
+    | "homeDoor"
+    | "corridorWindow"
+    | "corridorDoor"
+    | "classroomBoard"
+    | "classroomWindow"
+    | "classroomDoor"
+    | "stationBench"
+    | "stationRail"
+    | "harborRail"
+    | "harborWater";
 };
 
 type AutoMovePlan = {
@@ -123,12 +141,55 @@ type MapPlace = {
   sceneIds?: SceneId[];
 };
 
+type DailyWindowReason = "guarded" | "open" | "wideOpen";
+
+type DailyWindowProfile = {
+  count: 0 | 1 | 2;
+  reason: DailyWindowReason;
+};
+
 const initialPlayer: PlayerSnapshot = {
   x: 50,
   y: 67,
   direction: "down",
   isWalking: false,
   walkFrame: 0,
+};
+
+const agentSignalBaseline = {
+  pressure: 64,
+  loneliness: 57,
+  trust: 48,
+};
+
+const getDailyWindowProfile = (): DailyWindowProfile => {
+  const { pressure, loneliness, trust } = agentSignalBaseline;
+
+  if (pressure >= 70 && trust <= 45) {
+    return {
+      count: 0,
+      reason: "guarded",
+    };
+  }
+
+  if (loneliness >= 62 && trust >= 58) {
+    return {
+      count: 2,
+      reason: "wideOpen",
+    };
+  }
+
+  if (loneliness >= 55 || trust >= 48) {
+    return {
+      count: 1,
+      reason: "open",
+    };
+  }
+
+  return {
+    count: 0,
+    reason: "guarded",
+  };
 };
 
 const sceneMaps: Record<SceneId, SceneMap> = {
@@ -251,6 +312,34 @@ const sceneMaps: Record<SceneId, SceneMap> = {
         labelKey: "enterClassroom",
       },
     ],
+    touchZones: [
+      {
+        id: "corridor-window",
+        labelKey: "window",
+        minX: 76,
+        maxX: 95,
+        minY: 18,
+        maxY: 51,
+        approachPoint: {
+          x: 72,
+          y: 49,
+        },
+        responseKey: "corridorWindow",
+      },
+      {
+        id: "corridor-door",
+        labelKey: "door",
+        minX: 43,
+        maxX: 57,
+        minY: 21,
+        maxY: 38,
+        approachPoint: {
+          x: 50,
+          y: 45,
+        },
+        responseKey: "corridorDoor",
+      },
+    ],
   },
   classroom: {
     image: classroomScene,
@@ -281,6 +370,47 @@ const sceneMaps: Record<SceneId, SceneMap> = {
         maxY: 94,
         target: "station",
         labelKey: "afterSchoolStation",
+      },
+    ],
+    touchZones: [
+      {
+        id: "classroom-board",
+        labelKey: "board",
+        minX: 24,
+        maxX: 71,
+        minY: 8,
+        maxY: 27,
+        approachPoint: {
+          x: 48,
+          y: 38,
+        },
+        responseKey: "classroomBoard",
+      },
+      {
+        id: "classroom-window",
+        labelKey: "window",
+        minX: 77,
+        maxX: 95,
+        minY: 28,
+        maxY: 68,
+        approachPoint: {
+          x: 72,
+          y: 56,
+        },
+        responseKey: "classroomWindow",
+      },
+      {
+        id: "classroom-door",
+        labelKey: "door",
+        minX: 87,
+        maxX: 95,
+        minY: 12,
+        maxY: 30,
+        approachPoint: {
+          x: 79,
+          y: 34,
+        },
+        responseKey: "classroomDoor",
       },
     ],
   },
@@ -315,6 +445,34 @@ const sceneMaps: Record<SceneId, SceneMap> = {
         labelKey: "goToHarbor",
       },
     ],
+    touchZones: [
+      {
+        id: "station-bench",
+        labelKey: "bench",
+        minX: 43,
+        maxX: 64,
+        minY: 50,
+        maxY: 63,
+        approachPoint: {
+          x: 54,
+          y: 71,
+        },
+        responseKey: "stationBench",
+      },
+      {
+        id: "station-rail",
+        labelKey: "rail",
+        minX: 25,
+        maxX: 78,
+        minY: 27,
+        maxY: 42,
+        approachPoint: {
+          x: 56,
+          y: 50,
+        },
+        responseKey: "stationRail",
+      },
+    ],
   },
   harbor: {
     image: harborAfterSchoolScene,
@@ -339,12 +497,39 @@ const sceneMaps: Record<SceneId, SceneMap> = {
         labelKey: "backToStation",
       },
     ],
+    touchZones: [
+      {
+        id: "harbor-water",
+        labelKey: "water",
+        minX: 20,
+        maxX: 87,
+        minY: 16,
+        maxY: 47,
+        approachPoint: {
+          x: 56,
+          y: 57,
+        },
+        responseKey: "harborWater",
+      },
+      {
+        id: "harbor-rail",
+        labelKey: "rail",
+        minX: 4,
+        maxX: 18,
+        minY: 44,
+        maxY: 72,
+        approachPoint: {
+          x: 22,
+          y: 66,
+        },
+        responseKey: "harborRail",
+      },
+    ],
   },
 };
 
 const playerSpeed = 22;
 const baseEchoCount = 2;
-const agentGrantedEchoWindows = 1;
 const noteEchoLimit = 30;
 const dayDurationMs = 5 * 60 * 1000;
 const timeFlowStepMs = dayDurationMs / 3;
@@ -474,7 +659,11 @@ const copy = {
     echo: {
       title: "今日回声",
       base: "基础",
-      window: "她今天好像愿意多听一句。",
+      windows: {
+        guarded: "她今天把心门收得很紧，像是不想被追得太近。",
+        open: "她今天好像愿意多听一句。",
+        wideOpen: "她今天悄悄打开了两个缝隙，像是在等人靠近。",
+      },
       depleted: "今天的回声已经落下了。只能远远陪着。",
     },
     spatialEcho: {
@@ -487,6 +676,10 @@ const copy = {
         bag: "书包",
         bed: "床边",
         door: "门口",
+        board: "黑板",
+        bench: "长椅",
+        rail: "铁轨边",
+        water: "水面",
       },
       confirm: "让她走近",
       back: "再想一想",
@@ -495,6 +688,24 @@ const copy = {
       homeBag: "书包带子轻轻滑落。她把它扶正，像是在提醒自己今天已经开始了。",
       homeBed: "被角还留着体温。她回头看了一眼，没有坐回去。",
       homeDoor: "门边的光线窄窄一条。她站了一会儿，终于往外走。",
+      corridorWindow:
+        "走廊尽头的窗面亮了一下。她放慢脚步，像是忽然想到放学后的风会是什么味道。",
+      corridorDoor:
+        "教室门边传来很轻的响动。她把手放在门边一瞬，像在确认自己有没有准备好进去。",
+      classroomBoard:
+        "黑板上的字迹有一点晕开。她盯着那一行看了太久，像是想把今天要面对的东西先默背一遍。",
+      classroomWindow:
+        "窗边的光落在课桌边缘。她没有回头太久，却还是让目光在那里停了一小会儿。",
+      classroomDoor:
+        "门口的风从背后擦过去。她像是知道有人在等她做决定，于是慢慢站起身。",
+      stationBench:
+        "长椅边的影子把时间拖慢了一点。她没有坐下，只是在旁边停住，像把回家这件事往后推了几分钟。",
+      stationRail:
+        "铁轨一直朝远处延伸。她看了一会儿，没有说想去哪里，只是好像没有那么急着回头。",
+      harborRail:
+        "栏杆有些凉。她把手轻轻搭上去，像是借着海风把心里那点拧着的地方慢慢松开。",
+      harborWater:
+        "海面亮了一下又暗下去。她看着那道光散开，像终于允许今天不用立刻得出答案。",
     },
     noteEcho: {
       title: "写给澪的一句话",
@@ -533,6 +744,30 @@ const copy = {
       emptyTrace: "今天没有留下明确的回声，只剩下一点很轻的风。",
       footer: "以后这里可以换成每天自动生成的日记内容。",
       close: "合上日记",
+    },
+    daySummary: {
+      eyebrow: "第一天收束",
+      title: "这一天留下了什么",
+      hint: "先用一个很轻的总结页，把这一天真正收住。",
+      tracesTitle: "今天的痕迹",
+      routeTitle: "走过的地方",
+      moodTitle: "今天更靠近的方向",
+      nextTitle: "明天可能松开的地方",
+      close: "先把今天收好",
+      open: "看今天的小结",
+      emptyTrace: "今天只是陪着，没有留下明确的回声。",
+      moods: {
+        home: "她还是把很多话留在屋子里，但已经开始慢慢朝外走。",
+        school: "学校里的光线和视线都留下了细小的压力，也留下了被看见的可能。",
+        distance: "车站和海边让“离开一下”第一次有了具体的方向感。",
+        note: "那句纸条没有变成命令，更像是一点会在夜里反复想起的余温。",
+        touch: "那些轻轻碰过的地方，让她今天的注意力不再完全照旧。",
+      },
+      nextSteps: {
+        guarded: "她明天可能还是很谨慎，但已经知道有人没有逼她开口。",
+        open: "她明天也许会再多给一句话的距离，尤其是在放学以后。",
+        wideOpen: "她明天可能会把心门再多开一点点，只要靠近的人别太急。",
+      },
     },
     sceneHotspots: {
       leaveHome: "出门上学",
@@ -651,7 +886,13 @@ const copy = {
     echo: {
       title: "Today's Echoes",
       base: "Base",
-      window: "She seems willing to hear one more thing today.",
+      windows: {
+        guarded:
+          "She keeps herself closed today, as if she does not want to be followed too closely.",
+        open: "She seems willing to hear one more thing today.",
+        wideOpen:
+          "She quietly leaves two extra openings today, as if she might let someone come a little closer.",
+      },
       depleted: "Today's echoes have already settled. You can only stay near.",
     },
     spatialEcho: {
@@ -664,6 +905,10 @@ const copy = {
         bag: "Schoolbag",
         bed: "Bedside",
         door: "Doorway",
+        board: "Blackboard",
+        bench: "Bench",
+        rail: "Tracks",
+        water: "Water",
       },
       confirm: "Let her walk closer",
       back: "Not yet",
@@ -672,6 +917,24 @@ const copy = {
       homeBag: "The schoolbag strap slips down. She straightens it, as if reminding herself the day has already begun.",
       homeBed: "The blanket still holds warmth. She looks back once, but does not sit down again.",
       homeDoor: "A narrow line of light rests by the door. She stands there for a while, then finally moves forward.",
+      corridorWindow:
+        "The window at the end of the corridor catches the light. She slows down, as if wondering what the wind after school might feel like.",
+      corridorDoor:
+        "There is a faint sound by the classroom door. She pauses there for a moment, as if checking whether she is ready to go in.",
+      classroomBoard:
+        "The chalk marks blur slightly on the board. She watches one line a little too long, as if rehearsing what today expects from her.",
+      classroomWindow:
+        "Light gathers near the classroom window. She does not turn for long, but she still lets her eyes stay there for a moment.",
+      classroomDoor:
+        "A draft passes the doorway behind her. She seems to know something is waiting for a decision, so she rises slowly.",
+      stationBench:
+        "The shadow by the bench slows time down a little. She does not sit, only stops beside it as if postponing the trip home for a few minutes.",
+      stationRail:
+        "The tracks keep pulling toward somewhere else. She watches them for a while and does not seem as eager to turn back.",
+      harborRail:
+        "The rail is cool beneath her hand. She rests there lightly, as if letting the sea wind loosen something knotted inside her.",
+      harborWater:
+        "The water brightens once and goes dim again. She watches the light break apart, as if finally allowing today to stay unresolved.",
     },
     noteEcho: {
       title: "A sentence for Mio",
@@ -712,6 +975,37 @@ const copy = {
         "No clear echo stayed behind today, only something as light as wind.",
       footer: "Later, this can become the auto-written diary entry for each day.",
       close: "Close Diary",
+    },
+    daySummary: {
+      eyebrow: "Day One Close",
+      title: "What Stayed Behind Today",
+      hint: "A light result page for now, just enough to let the day land.",
+      tracesTitle: "Traces Left",
+      routeTitle: "Places Crossed",
+      moodTitle: "What She Moved Closer To",
+      nextTitle: "What May Open Tomorrow",
+      close: "Keep Today Folded",
+      open: "View Day Summary",
+      emptyTrace: "Today was mostly quiet companionship, without a clear echo left behind.",
+      moods: {
+        home: "She kept many things inside the room, but she still began to move outward.",
+        school:
+          "The school light and the eyes around her left a small pressure, and also the possibility of being seen.",
+        distance:
+          "The station and the harbor made the idea of stepping away feel newly concrete.",
+        note:
+          "The note did not become an instruction. It became something warm enough to be reconsidered at night.",
+        touch:
+          "Those small touches kept her attention from passing through the day exactly as usual.",
+      },
+      nextSteps: {
+        guarded:
+          "Tomorrow she may still stay careful, but she already knows someone did not force her to speak.",
+        open:
+          "Tomorrow she may allow one more sentence of closeness, especially after school.",
+        wideOpen:
+          "Tomorrow she may leave the door a little wider, as long as nobody rushes her.",
+      },
     },
     sceneHotspots: {
       leaveHome: "Leave for School",
@@ -783,9 +1077,13 @@ const copy = {
 } satisfies Record<Language, Record<string, unknown>>;
 
 export function App() {
+  const [dailyWindowProfile, setDailyWindowProfile] = useState<DailyWindowProfile>(
+    () => getDailyWindowProfile(),
+  );
   const [language, setLanguage] = useState<Language>("zh");
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
+  const [isDaySummaryOpen, setIsDaySummaryOpen] = useState(false);
   const [activeScene, setActiveScene] = useState<SceneId>("homeRoom");
   const [activeTimeOfDay, setActiveTimeOfDay] = useState<TimeOfDay>("morning");
   const [gameDay, setGameDay] = useState(1);
@@ -818,7 +1116,7 @@ export function App() {
     activeSceneMap.timeImages?.[activeTimeOfDay] ?? activeSceneMap.image;
   const monthChip = `${text.monthChipPrefix} · ${text.dayLabel.replace("{day}", String(gameDay))}`;
   const activeClock = timeClock[activeTimeOfDay];
-  const totalEchoes = baseEchoCount + agentGrantedEchoWindows;
+  const totalEchoes = baseEchoCount + dailyWindowProfile.count;
   const remainingEchoes = totalEchoes - usedEchoes;
   const trimmedNote = noteDraft.trim();
   const activeTouchZones = activeSceneMap.touchZones ?? [];
@@ -827,6 +1125,18 @@ export function App() {
     .reverse()
     .find((trace) => trace.kind === "note");
   const hasSpatialTrace = echoTraces.some((trace) => trace.kind === "spatial");
+  const daySummaryLines = [
+    visitedSet.has("homeRoom") ? text.daySummary.moods.home : null,
+    visitedSet.has("corridor") || visitedSet.has("classroom")
+      ? text.daySummary.moods.school
+      : null,
+    visitedSet.has("station") || visitedSet.has("harbor")
+      ? text.daySummary.moods.distance
+      : null,
+    latestNoteTrace?.kind === "note" ? text.daySummary.moods.note : null,
+    hasSpatialTrace ? text.daySummary.moods.touch : null,
+  ].filter((line): line is string => Boolean(line));
+  const routeSummary = visitedScenes.map((scene) => text.sceneNames[scene]).join(" / ");
   const diaryParagraphs = [
     text.diaryModal.defaultParagraph,
     visitedSet.has("corridor") || visitedSet.has("classroom")
@@ -864,6 +1174,7 @@ export function App() {
     setPendingTouchZone(null);
     setIsNoteEchoOpen(false);
     setIsDiaryOpen(false);
+    setIsDaySummaryOpen(false);
   };
   const openNoteEcho = () => {
     if (remainingEchoes <= 0) {
@@ -1022,11 +1333,13 @@ export function App() {
       if (elapsed >= dayDurationMs) {
         dayFlowStartRef.current = timestamp;
         setGameDay((current) => current + 1);
+        setDailyWindowProfile(getDailyWindowProfile());
         setUsedEchoes(0);
         setSentNote("");
         setEchoTraces([]);
         setVisitedScenes(["homeRoom"]);
         setActiveScene("homeRoom");
+        setIsDaySummaryOpen(false);
         setSceneText(
           language === "zh"
             ? "新的一天又轻轻开始了。"
@@ -1145,24 +1458,7 @@ export function App() {
       playerRef.current = nextPlayer;
       setPlayerView(nextPlayer);
 
-      const activeTransition = isAutoMoving
-        ? undefined
-        : sceneMap.transitions.find(
-            (transition) =>
-              nextPlayer.x >= transition.minX &&
-              nextPlayer.x <= transition.maxX &&
-              nextPlayer.y >= transition.minY &&
-              nextPlayer.y <= transition.maxY,
-          );
-
-      if (activeTransition && !hasTransitionedRef.current) {
-        hasTransitionedRef.current = true;
-        setActiveScene(activeTransition.target);
-      }
-
-      if (!activeTransition && hasTransitionedRef.current) {
-        hasTransitionedRef.current = false;
-      }
+      hasTransitionedRef.current = false;
 
       animationFrame = window.requestAnimationFrame(tick);
     };
@@ -1273,7 +1569,7 @@ export function App() {
           <aside className="echo-hud" aria-label={text.echo.title}>
             <div>
               <span>{text.echo.title}</span>
-              <small>{text.echo.window}</small>
+              <small>{text.echo.windows[dailyWindowProfile.reason]}</small>
             </div>
             <div className="echo-dots">
               {Array.from({ length: totalEchoes }, (_, index) => (
@@ -1355,6 +1651,10 @@ export function App() {
           <button onClick={() => setIsDiaryOpen(true)} type="button">
             <BookOpen size={17} />
             {text.actions.diary}
+          </button>
+          <button onClick={() => setIsDaySummaryOpen(true)} type="button">
+            <CalendarDays size={17} />
+            {text.daySummary.open}
           </button>
           <button type="button">
             <Heart size={17} />
@@ -1630,7 +1930,7 @@ export function App() {
               {text.spatialEcho.promptPrefix}{" "}
               {text.spatialEcho.labels[pendingTouchZone.labelKey]}
             </h2>
-            <p>{text.echo.window}</p>
+            <p>{text.echo.windows[dailyWindowProfile.reason]}</p>
             <div className="touch-confirm-actions">
               <button
                 onClick={() => setPendingTouchZone(null)}
@@ -1641,6 +1941,67 @@ export function App() {
               <button onClick={confirmSpatialEcho} type="button">
                 {text.spatialEcho.confirm}
               </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {isDaySummaryOpen ? (
+        <section
+          aria-label={text.daySummary.title}
+          className="note-modal"
+          role="dialog"
+        >
+          <div className="note-paper day-summary-paper">
+            <header className="diary-paper-header">
+              <div>
+                <p className="eyebrow">{text.daySummary.eyebrow}</p>
+                <h2>{text.daySummary.title}</h2>
+              </div>
+              <button onClick={() => setIsDaySummaryOpen(false)} type="button">
+                {text.daySummary.close}
+              </button>
+            </header>
+
+            <p className="note-hint">{text.daySummary.hint}</p>
+
+            <div className="day-summary-grid">
+              <article className="day-summary-card">
+                <p className="eyebrow">{text.daySummary.tracesTitle}</p>
+                <p>
+                  {echoTraces.length > 0
+                    ? traceSummary
+                    : text.daySummary.emptyTrace}
+                </p>
+              </article>
+
+              <article className="day-summary-card">
+                <p className="eyebrow">{text.daySummary.routeTitle}</p>
+                <p>{routeSummary}</p>
+              </article>
+
+              <article className="day-summary-card">
+                <p className="eyebrow">{text.daySummary.moodTitle}</p>
+                <div className="day-summary-list">
+                  {daySummaryLines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              </article>
+
+              <article className="day-summary-card">
+                <p className="eyebrow">{text.daySummary.nextTitle}</p>
+                <p>{text.daySummary.nextSteps[dailyWindowProfile.reason]}</p>
+              </article>
+            </div>
+
+            <div className="note-footer diary-footer">
+              <small>{monthChip}</small>
+              <div>
+                <button onClick={() => setIsDaySummaryOpen(false)} type="button">
+                  {text.daySummary.close}
+                </button>
+              </div>
             </div>
           </div>
         </section>
