@@ -13,17 +13,19 @@ import {
 import { useEffect, useRef, useState } from "react";
 import regionMapApril from "../assets/pixel/scenes/region_map_april.png";
 import classroomScene from "../assets/pixel/scenes/scene_classroom_day.png";
+import harborAfterSchoolScene from "../assets/pixel/scenes/scene_harbor_after_school.png";
 import homeRoomAfternoonScene from "../assets/pixel/scenes/scene_home_room_afternoon.png";
 import homeRoomScene from "../assets/pixel/scenes/scene_home_room_day.png";
 import homeRoomNightScene from "../assets/pixel/scenes/scene_home_room_night.png";
 import schoolCorridorScene from "../assets/pixel/scenes/scene_school_corridor_day.png";
+import stationAfterSchoolScene from "../assets/pixel/scenes/scene_station_after_school.png";
 import clockAfternoonImage from "../assets/pixel/ui/clock_afternoon.png";
 import clockMorningImage from "../assets/pixel/ui/clock_morning.png";
 import clockNightImage from "../assets/pixel/ui/clock_night.png";
 import { aprilScenario } from "../game/world";
 
 type Language = "zh" | "en";
-type SceneId = "homeRoom" | "corridor" | "classroom";
+type SceneId = "homeRoom" | "corridor" | "classroom" | "station" | "harbor";
 type TimeOfDay = "morning" | "afternoon" | "night";
 type Direction = "up" | "down" | "left" | "right";
 
@@ -44,7 +46,13 @@ type Rect = {
 
 type SceneTransition = Rect & {
   target: SceneId;
-  labelKey: "leaveHome" | "enterClassroom" | "backToCorridor";
+  labelKey:
+    | "leaveHome"
+    | "enterClassroom"
+    | "backToCorridor"
+    | "afterSchoolStation"
+    | "goToHarbor"
+    | "backToStation";
 };
 
 type SceneMap = {
@@ -77,12 +85,42 @@ type AutoMovePlan = {
   responseText: string;
 };
 
+type EchoTrace =
+  | {
+      id: string;
+      kind: "note";
+      text: string;
+    }
+  | {
+      id: string;
+      kind: "spatial";
+      scene: SceneId;
+      labelKey: TouchZone["labelKey"];
+    };
+
 type TimeSlotCopy = {
   id: TimeOfDay;
   label: string;
   scene: string;
   icon: typeof Home;
   note: string;
+};
+
+type MapPlaceId =
+  | "home"
+  | "school"
+  | "station"
+  | "harbor"
+  | "shrine"
+  | "shoppingStreet";
+
+type MapPlace = {
+  id: MapPlaceId;
+  labelKey: MapPlaceId;
+  x: number;
+  y: number;
+  target?: SceneId;
+  sceneIds?: SceneId[];
 };
 
 const initialPlayer: PlayerSnapshot = {
@@ -236,6 +274,70 @@ const sceneMaps: Record<SceneId, SceneMap> = {
         target: "corridor",
         labelKey: "backToCorridor",
       },
+      {
+        minX: 4,
+        maxX: 17,
+        minY: 78,
+        maxY: 94,
+        target: "station",
+        labelKey: "afterSchoolStation",
+      },
+    ],
+  },
+  station: {
+    image: stationAfterSchoolScene,
+    spawn: {
+      x: 50,
+      y: 64,
+      direction: "down",
+    },
+    walkBounds: {
+      minX: 6,
+      maxX: 94,
+      minY: 42,
+      maxY: 86,
+    },
+    transitions: [
+      {
+        minX: 2,
+        maxX: 13,
+        minY: 40,
+        maxY: 58,
+        target: "classroom",
+        labelKey: "backToCorridor",
+      },
+      {
+        minX: 87,
+        maxX: 98,
+        minY: 52,
+        maxY: 79,
+        target: "harbor",
+        labelKey: "goToHarbor",
+      },
+    ],
+  },
+  harbor: {
+    image: harborAfterSchoolScene,
+    spawn: {
+      x: 50,
+      y: 62,
+      direction: "down",
+    },
+    walkBounds: {
+      minX: 5,
+      maxX: 93,
+      minY: 37,
+      maxY: 86,
+    },
+    transitions: [
+      {
+        minX: 4,
+        maxX: 15,
+        minY: 47,
+        maxY: 70,
+        target: "station",
+        labelKey: "backToStation",
+      },
     ],
   },
 };
@@ -246,6 +348,53 @@ const agentGrantedEchoWindows = 1;
 const noteEchoLimit = 30;
 const dayDurationMs = 5 * 60 * 1000;
 const timeFlowStepMs = dayDurationMs / 3;
+
+const mapPlaces: MapPlace[] = [
+  {
+    id: "shrine",
+    labelKey: "shrine",
+    x: 18,
+    y: 14,
+  },
+  {
+    id: "school",
+    labelKey: "school",
+    x: 36,
+    y: 48,
+    target: "corridor",
+    sceneIds: ["corridor", "classroom"],
+  },
+  {
+    id: "shoppingStreet",
+    labelKey: "shoppingStreet",
+    x: 47,
+    y: 55,
+  },
+  {
+    id: "home",
+    labelKey: "home",
+    x: 52,
+    y: 64,
+    target: "homeRoom",
+    sceneIds: ["homeRoom"],
+  },
+  {
+    id: "station",
+    labelKey: "station",
+    x: 60,
+    y: 40,
+    target: "station",
+    sceneIds: ["station"],
+  },
+  {
+    id: "harbor",
+    labelKey: "harbor",
+    x: 64,
+    y: 76,
+    target: "harbor",
+    sceneIds: ["harbor"],
+  },
+];
 
 const timeIcons = {
   morning: Home,
@@ -288,6 +437,8 @@ const copy = {
       homeRoom: "房间",
       corridor: "走廊",
       classroom: "教室",
+      station: "小车站外",
+      harbor: "临海空场",
     },
     timeSlots: [
       {
@@ -362,13 +513,24 @@ const copy = {
       title: "澪的日记",
       hint: "先用 mock 内容占位，重点看夜里翻开纸页时的感觉。",
       entryDate: "四月 / 第一天 / 夜里 23:00",
-      paragraphs: [
+      defaultParagraph:
         "今天在门口站了一会儿。明明和平常一样，手碰到门把的时候，却觉得屋子里还有什么没说完。",
+      schoolParagraph:
         "教室窗边的光有点亮，亮得像有人从很远的地方看了我一下。我没有回头，只是假装在看黑板。",
+      stationParagraph:
+        "放学后经过小车站的时候，铁轨一直向远处伸过去。我没有立刻回家，只是在长椅旁边站了一会儿。",
+      harborParagraph:
+        "海边的风比想象中安静。水面亮了一下又暗下去，好像今天有些话可以不用马上说出来。",
+      noteParagraphPrefix: "那张纸条上写着：",
+      noteParagraphSuffix:
+        "我不知道是不是应该相信它，但我确实把那句话在心里念了一遍。",
+      spatialParagraph:
+        "有几次，我像是被很轻地碰了一下。不是命令，更像有人把我的注意力悄悄放到某个地方。",
+      closingParagraph:
         "如果真的有人在靠近我，希望不要靠得太急。太急的话，我又会像平常一样先退开半步。",
-      ],
       traceLabel: "今天留下的痕迹",
       mockTrace: "她记不清那句话是不是写给她的，只记得纸边像晨光一样薄。",
+      emptyTrace: "今天没有留下明确的回声，只剩下一点很轻的风。",
       footer: "以后这里可以换成每天自动生成的日记内容。",
       close: "合上日记",
     },
@@ -376,13 +538,26 @@ const copy = {
       leaveHome: "出门上学",
       enterClassroom: "进入教室",
       backToCorridor: "回到走廊",
+      afterSchoolStation: "放学后去车站",
+      goToHarbor: "去海边停一会儿",
+      backToStation: "回到车站",
     },
     regionMap: {
       title: "夏末沿海町",
       subtitle: "四月区域图",
       close: "关闭地图",
-      hint: "第一版区域地图：山上神社、学校、住宅区、小车站、铁轨和海边路。",
-      places: ["山上神社", "学校", "住宅区", "小车站", "商店街", "海边路"],
+      hint: "澪所在的位置会在地图上轻轻闪一下。已开放的地点可以前往。",
+      current: "现在在这里",
+      available: "可以前往",
+      locked: "尚未开放",
+      placeNames: {
+        home: "住宅区",
+        school: "学校",
+        station: "小车站",
+        harbor: "临海空场",
+        shrine: "山上神社",
+        shoppingStreet: "商店街",
+      },
     },
     agentEyebrow: "Agent",
     agentName: "朝仓澪",
@@ -439,6 +614,8 @@ const copy = {
       homeRoom: "Room",
       corridor: "Corridor",
       classroom: "Classroom",
+      station: "Station Exterior",
+      harbor: "Harbor Edge",
     },
     timeSlots: [
       {
@@ -513,14 +690,26 @@ const copy = {
       title: "Mio's Diary",
       hint: "Mock text for now. The main goal here is the feeling of opening a larger diary page at night.",
       entryDate: "April / Day 1 / 23:00",
-      paragraphs: [
+      defaultParagraph:
         "I stood by the door a little too long today. Everything was ordinary, but when my hand touched the handle it felt like the room had not finished saying something.",
+      schoolParagraph:
         "The classroom window was brighter than it should have been, as if someone from very far away had looked at me once. I did not turn around. I only pretended to watch the board.",
+      stationParagraph:
+        "After school, the tracks by the small station kept running toward somewhere else. I did not go home right away. I stood near the bench for a while.",
+      harborParagraph:
+        "The wind by the water was quieter than I expected. The surface brightened once and went dim again, as if some things did not have to be said today.",
+      noteParagraphPrefix: "The note said:",
+      noteParagraphSuffix:
+        "I do not know if I should believe it, but I did read the sentence once inside my head.",
+      spatialParagraph:
+        "A few times, it felt like something touched my attention very lightly. Not a command, more like someone placing my eyes somewhere for a moment.",
+      closingParagraph:
         "If someone is really trying to come closer, I hope they do not do it too quickly. If they do, I will probably step back the way I always do.",
-      ],
       traceLabel: "Trace Left Today",
       mockTrace:
         "She cannot quite remember whether the sentence was meant for her, only that the edge of the note felt as thin as morning light.",
+      emptyTrace:
+        "No clear echo stayed behind today, only something as light as wind.",
       footer: "Later, this can become the auto-written diary entry for each day.",
       close: "Close Diary",
     },
@@ -528,20 +717,26 @@ const copy = {
       leaveHome: "Leave for School",
       enterClassroom: "Enter Classroom",
       backToCorridor: "Back to Corridor",
+      afterSchoolStation: "After School Station",
+      goToHarbor: "Go to the Harbor",
+      backToStation: "Back to Station",
     },
     regionMap: {
       title: "Natsusue Coastal Town",
       subtitle: "April Region Map",
       close: "Close Map",
-      hint: "First region map: hillside shrine, school, homes, station, railway, and seaside road.",
-      places: [
-        "Hillside Shrine",
-        "School",
-        "Residential Area",
-        "Small Station",
-        "Shopping Street",
-        "Seaside Road",
-      ],
+      hint: "Mio's current place flickers softly on the town map. Open places can be visited.",
+      current: "Here Now",
+      available: "Open",
+      locked: "Not Open Yet",
+      placeNames: {
+        home: "Residential Area",
+        school: "School",
+        station: "Small Station",
+        harbor: "Harbor Edge",
+        shrine: "Hillside Shrine",
+        shoppingStreet: "Shopping Street",
+      },
     },
     agentEyebrow: "Agent",
     agentName: "Mio Asakura",
@@ -599,6 +794,8 @@ export function App() {
   const [isNoteEchoOpen, setIsNoteEchoOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
   const [sentNote, setSentNote] = useState("");
+  const [visitedScenes, setVisitedScenes] = useState<SceneId[]>(["homeRoom"]);
+  const [echoTraces, setEchoTraces] = useState<EchoTrace[]>([]);
   const [noteFloatKey, setNoteFloatKey] = useState(0);
   const [sceneText, setSceneText] = useState(aprilScenario.openingText);
   const [isTouchMode, setIsTouchMode] = useState(false);
@@ -625,16 +822,40 @@ export function App() {
   const remainingEchoes = totalEchoes - usedEchoes;
   const trimmedNote = noteDraft.trim();
   const activeTouchZones = activeSceneMap.touchZones ?? [];
-  const primaryTransition = activeSceneMap.transitions[0];
-  const activeHotspotLabel = primaryTransition
-    ? text.sceneHotspots[primaryTransition.labelKey]
-    : null;
-  const handleSceneSwitch = () => {
-    if (!primaryTransition) {
-      return;
-    }
-
-    setActiveScene(primaryTransition.target);
+  const visitedSet = new Set(visitedScenes);
+  const latestNoteTrace = [...echoTraces]
+    .reverse()
+    .find((trace) => trace.kind === "note");
+  const hasSpatialTrace = echoTraces.some((trace) => trace.kind === "spatial");
+  const diaryParagraphs = [
+    text.diaryModal.defaultParagraph,
+    visitedSet.has("corridor") || visitedSet.has("classroom")
+      ? text.diaryModal.schoolParagraph
+      : null,
+    visitedSet.has("station") ? text.diaryModal.stationParagraph : null,
+    visitedSet.has("harbor") ? text.diaryModal.harborParagraph : null,
+    latestNoteTrace?.kind === "note"
+      ? `${text.diaryModal.noteParagraphPrefix} "${latestNoteTrace.text}" ${text.diaryModal.noteParagraphSuffix}`
+      : null,
+    hasSpatialTrace ? text.diaryModal.spatialParagraph : null,
+    text.diaryModal.closingParagraph,
+  ].filter((paragraph): paragraph is string => Boolean(paragraph));
+  const traceSummary =
+    echoTraces.length > 0
+      ? echoTraces
+          .map((trace) =>
+            trace.kind === "note"
+              ? `"${trace.text}"`
+              : text.spatialEcho.labels[trace.labelKey],
+          )
+          .join(" / ")
+      : text.diaryModal.emptyTrace;
+  const handleSceneSwitch = (transition: SceneTransition) => {
+    setActiveScene(transition.target);
+  };
+  const handleMapTravel = (target: SceneId) => {
+    setActiveScene(target);
+    setIsMapOpen(false);
   };
   const transitionTimeOfDay = (timeOfDay: TimeOfDay, note: string) => {
     setActiveTimeOfDay(timeOfDay);
@@ -665,6 +886,14 @@ export function App() {
     }
 
     setSentNote(trimmedNote);
+    setEchoTraces((current) => [
+      ...current,
+      {
+        id: `note-${Date.now()}`,
+        kind: "note",
+        text: trimmedNote,
+      },
+    ]);
     setUsedEchoes((current) => current + 1);
     setNoteFloatKey((current) => current + 1);
     setNoteDraft("");
@@ -710,6 +939,15 @@ export function App() {
     }
 
     setUsedEchoes((current) => current + 1);
+    setEchoTraces((current) => [
+      ...current,
+      {
+        id: `${pendingTouchZone.id}-${Date.now()}`,
+        kind: "spatial",
+        scene: activeScene,
+        labelKey: pendingTouchZone.labelKey,
+      },
+    ]);
     setIsTouchMode(false);
     setPendingTouchZone(null);
     setAutoMovePlan({
@@ -721,6 +959,9 @@ export function App() {
 
   useEffect(() => {
     activeSceneRef.current = activeScene;
+    setVisitedScenes((current) =>
+      current.includes(activeScene) ? current : [...current, activeScene],
+    );
   }, [activeScene]);
 
   useEffect(() => {
@@ -783,6 +1024,8 @@ export function App() {
         setGameDay((current) => current + 1);
         setUsedEchoes(0);
         setSentNote("");
+        setEchoTraces([]);
+        setVisitedScenes(["homeRoom"]);
         setActiveScene("homeRoom");
         setSceneText(
           language === "zh"
@@ -1042,15 +1285,16 @@ export function App() {
             </div>
           </aside>
 
-          {activeHotspotLabel ? (
+          {activeSceneMap.transitions.map((transition) => (
             <button
-              className={`scene-hotspot scene-hotspot-${activeScene}`}
-              onClick={handleSceneSwitch}
+              className={`scene-hotspot scene-hotspot-${activeScene} scene-hotspot-${transition.labelKey}`}
+              key={`${activeScene}-${transition.labelKey}`}
+              onClick={() => handleSceneSwitch(transition)}
               type="button"
             >
-              {activeHotspotLabel}
+              {text.sceneHotspots[transition.labelKey]}
             </button>
-          ) : null}
+          ))}
 
           <div
             aria-label={text.agentName}
@@ -1223,14 +1467,53 @@ export function App() {
 
             <div className="region-map-frame">
               <img alt={text.regionMap.title} src={regionMapApril} />
+              <div className="region-map-pins">
+                {mapPlaces.map((place) => {
+                  const isCurrent = place.sceneIds?.includes(activeScene) ?? false;
+                  const isOpen = Boolean(place.target);
+                  const placeName = text.regionMap.placeNames[place.labelKey];
+                  const status = isCurrent
+                    ? text.regionMap.current
+                    : isOpen
+                      ? text.regionMap.available
+                      : text.regionMap.locked;
+
+                  return (
+                    <button
+                      aria-label={`${placeName} · ${status}`}
+                      className={`map-place-pin ${
+                        isCurrent ? "is-current" : ""
+                      } ${isOpen ? "is-open" : "is-locked"}`}
+                      disabled={!place.target}
+                      key={place.id}
+                      onClick={() => {
+                        if (place.target) {
+                          handleMapTravel(place.target);
+                        }
+                      }}
+                      style={{
+                        left: `${place.x}%`,
+                        top: `${place.y}%`,
+                      }}
+                      type="button"
+                    >
+                      <span className="map-place-dot" />
+                      <span className="map-place-label">
+                        <strong>{placeName}</strong>
+                        <small>{status}</small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <footer className="map-modal-footer">
               <p>{text.regionMap.hint}</p>
-              <div className="map-place-list">
-                {text.regionMap.places.map((place) => (
-                  <span key={place}>{place}</span>
-                ))}
+              <div className="map-place-list" aria-hidden="true">
+                <span>{text.regionMap.current}</span>
+                <span>{text.regionMap.available}</span>
+                <span>{text.regionMap.locked}</span>
               </div>
             </footer>
           </div>
@@ -1312,7 +1595,7 @@ export function App() {
             <article className="diary-entry-card">
               <p className="diary-entry-date">{text.diaryModal.entryDate}</p>
               <div className="diary-entry-body">
-                {text.diaryModal.paragraphs.map((paragraph) => (
+                {diaryParagraphs.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
               </div>
@@ -1320,11 +1603,7 @@ export function App() {
 
             <aside className="diary-note-preview">
               <p className="eyebrow">{text.diaryModal.traceLabel}</p>
-              <p>
-                {sentNote
-                  ? `"${sentNote}"`
-                  : text.diaryModal.mockTrace}
-              </p>
+              <p>{traceSummary}</p>
             </aside>
 
             <div className="note-footer diary-footer">
