@@ -23,6 +23,8 @@ import clockAfternoonImage from "../assets/pixel/ui/clock_afternoon.png";
 import clockMorningImage from "../assets/pixel/ui/clock_morning.png";
 import clockNightImage from "../assets/pixel/ui/clock_night.png";
 import { aprilScenario } from "../game/world";
+import type { AgentBrainInput, AgentReaction } from "../llm/brainTypes";
+import { resolveAgentBrainFake } from "../llm/fakeResolver";
 
 type Language = "zh" | "en";
 type SceneId = "homeRoom" | "corridor" | "classroom" | "station" | "harbor";
@@ -146,6 +148,11 @@ type DailyWindowReason = "guarded" | "open" | "wideOpen";
 type DailyWindowProfile = {
   count: 0 | 1 | 2;
   reason: DailyWindowReason;
+};
+
+type AgentBrainMemory = {
+  recentDiary: string[];
+  recentReactions: AgentReaction[];
 };
 
 const initialPlayer: PlayerSnapshot = {
@@ -533,6 +540,7 @@ const baseEchoCount = 2;
 const noteEchoLimit = 30;
 const dayDurationMs = 5 * 60 * 1000;
 const timeFlowStepMs = dayDurationMs / 3;
+const maxBrainMemory = 4;
 
 const mapPlaces: MapPlace[] = [
   {
@@ -1094,6 +1102,10 @@ export function App() {
   const [sentNote, setSentNote] = useState("");
   const [visitedScenes, setVisitedScenes] = useState<SceneId[]>(["homeRoom"]);
   const [echoTraces, setEchoTraces] = useState<EchoTrace[]>([]);
+  const [brainMemory, setBrainMemory] = useState<AgentBrainMemory>({
+    recentDiary: [],
+    recentReactions: [],
+  });
   const [noteFloatKey, setNoteFloatKey] = useState(0);
   const [sceneText, setSceneText] = useState(aprilScenario.openingText);
   const [isTouchMode, setIsTouchMode] = useState(false);
@@ -1125,7 +1137,82 @@ export function App() {
     .reverse()
     .find((trace) => trace.kind === "note");
   const hasSpatialTrace = echoTraces.some((trace) => trace.kind === "spatial");
+  const buildBrainInput = (
+    event: AgentBrainInput["event"],
+    nextNoteEcho?: string,
+    nextSpatialTraces?: Array<{ scene: string; target: string }>,
+  ): AgentBrainInput => ({
+    language,
+    profile: {
+      id: "mio-asakura",
+      name: text.agentName,
+      age: 17,
+      summary: text.agentDescription,
+      keywords:
+        language === "zh"
+          ? ["敏感", "表达", "抗拒束缚", "沿海小城", "新学期"]
+          : ["sensitive", "expressive", "resistant", "coastal town", "new term"],
+    },
+    openingHand: {
+      summary: text.openingHand,
+      cards: text.openingHand.split(" / "),
+    },
+    currentState: {
+      pressure: 64,
+      loneliness: 57,
+      futureSense: 38,
+      selfSense: 46,
+      receptivity: 52,
+      autonomy: 58,
+      trust: agentSignalBaseline.trust,
+    },
+    relationships: text.relationships.map((relationship, index) => ({
+      id: `relationship-${index}`,
+      name: relationship.name,
+      role: relationship.role,
+      warmth: relationship.warmth,
+      tension: relationship.tension,
+      note: relationship.note,
+    })),
+    dayContext: {
+      day: gameDay,
+      timeOfDay: activeTimeOfDay,
+      scene: activeScene,
+      visitedScenes,
+    },
+    echoContext: {
+      baseEchoes: baseEchoCount,
+      extraWindows: dailyWindowProfile.count,
+      usedEchoes,
+      remainingEchoes,
+      noteEcho: nextNoteEcho ?? latestNoteTrace?.text,
+      spatialTraces:
+        nextSpatialTraces ??
+        echoTraces
+          .filter(
+            (
+              trace,
+            ): trace is Extract<EchoTrace, { kind: "spatial" }> =>
+              trace.kind === "spatial",
+          )
+          .map((trace) => ({
+            scene: trace.scene,
+            target: trace.labelKey,
+          })),
+    },
+    memory: brainMemory,
+    event,
+  });
+  const pushBrainMemory = (diaryFragment: string, reaction: AgentReaction) => {
+    setBrainMemory((current) => ({
+      recentDiary: [...current.recentDiary, diaryFragment].slice(-maxBrainMemory),
+      recentReactions: [...current.recentReactions, reaction].slice(-maxBrainMemory),
+    }));
+  };
   const daySummaryLines = [
+    brainMemory.recentReactions.length > 0
+      ? brainMemory.recentDiary[brainMemory.recentDiary.length - 1]
+      : null,
     visitedSet.has("homeRoom") ? text.daySummary.moods.home : null,
     visitedSet.has("corridor") || visitedSet.has("classroom")
       ? text.daySummary.moods.school
@@ -1144,10 +1231,7 @@ export function App() {
       : null,
     visitedSet.has("station") ? text.diaryModal.stationParagraph : null,
     visitedSet.has("harbor") ? text.diaryModal.harborParagraph : null,
-    latestNoteTrace?.kind === "note"
-      ? `${text.diaryModal.noteParagraphPrefix} "${latestNoteTrace.text}" ${text.diaryModal.noteParagraphSuffix}`
-      : null,
-    hasSpatialTrace ? text.diaryModal.spatialParagraph : null,
+    brainMemory.recentDiary[brainMemory.recentDiary.length - 1] ?? null,
     text.diaryModal.closingParagraph,
   ].filter((paragraph): paragraph is string => Boolean(paragraph));
   const traceSummary =
@@ -1196,21 +1280,45 @@ export function App() {
       return;
     }
 
+    const nextTrace = {
+      id: `note-${Date.now()}`,
+      kind: "note" as const,
+      text: trimmedNote,
+    };
+    const nextEchoTraces = [...echoTraces, nextTrace];
+    const brainOutput = resolveAgentBrainFake(
+      buildBrainInput(
+        {
+          kind: "note",
+          noteText: trimmedNote,
+        },
+        trimmedNote,
+        nextEchoTraces
+          .filter(
+            (
+              trace,
+            ): trace is Extract<EchoTrace, { kind: "spatial" }> =>
+              trace.kind === "spatial",
+          )
+          .map((trace) => ({
+            scene: trace.scene,
+            target: trace.labelKey,
+          })),
+      ),
+    );
+
     setSentNote(trimmedNote);
-    setEchoTraces((current) => [
-      ...current,
-      {
-        id: `note-${Date.now()}`,
-        kind: "note",
-        text: trimmedNote,
-      },
-    ]);
+    setEchoTraces(nextEchoTraces);
     setUsedEchoes((current) => current + 1);
     setNoteFloatKey((current) => current + 1);
     setNoteDraft("");
     setIsNoteEchoOpen(false);
     setPendingTouchZone(null);
-    setSceneText(`${text.noteEcho.sent} ${text.noteEcho.diaryPreview}`);
+    pushBrainMemory(
+      brainOutput.diary.fragment,
+      brainOutput.behavior.reaction,
+    );
+    setSceneText(brainOutput.behavior.outwardText);
   };
   const toggleTouchMode = () => {
     if (isTouchMode) {
@@ -1249,22 +1357,47 @@ export function App() {
       return;
     }
 
+    const nextTrace = {
+      id: `${pendingTouchZone.id}-${Date.now()}`,
+      kind: "spatial" as const,
+      scene: activeScene,
+      labelKey: pendingTouchZone.labelKey,
+    };
+    const nextEchoTraces = [...echoTraces, nextTrace];
+    const brainOutput = resolveAgentBrainFake(
+      buildBrainInput(
+        {
+          kind: "spatial",
+          scene: activeScene,
+          spatialTarget: pendingTouchZone.labelKey,
+        },
+        latestNoteTrace?.text,
+        nextEchoTraces
+          .filter(
+            (
+              trace,
+            ): trace is Extract<EchoTrace, { kind: "spatial" }> =>
+              trace.kind === "spatial",
+          )
+          .map((trace) => ({
+            scene: trace.scene,
+            target: trace.labelKey,
+          })),
+      ),
+    );
+
     setUsedEchoes((current) => current + 1);
-    setEchoTraces((current) => [
-      ...current,
-      {
-        id: `${pendingTouchZone.id}-${Date.now()}`,
-        kind: "spatial",
-        scene: activeScene,
-        labelKey: pendingTouchZone.labelKey,
-      },
-    ]);
+    setEchoTraces(nextEchoTraces);
     setIsTouchMode(false);
     setPendingTouchZone(null);
+    pushBrainMemory(
+      brainOutput.diary.fragment,
+      brainOutput.behavior.reaction,
+    );
     setAutoMovePlan({
       targetX: pendingTouchZone.approachPoint.x,
       targetY: pendingTouchZone.approachPoint.y,
-      responseText: text.spatialEcho[pendingTouchZone.responseKey],
+      responseText: brainOutput.behavior.outwardText,
     });
   };
 
@@ -1337,6 +1470,10 @@ export function App() {
         setUsedEchoes(0);
         setSentNote("");
         setEchoTraces([]);
+        setBrainMemory({
+          recentDiary: [],
+          recentReactions: [],
+        });
         setVisitedScenes(["homeRoom"]);
         setActiveScene("homeRoom");
         setIsDaySummaryOpen(false);
