@@ -1324,6 +1324,159 @@ h2 {
   line-height: 1.5;
 }
 
+.drift-card {
+  display: grid;
+  gap: 12px;
+}
+
+.drift-card-hint,
+.drift-empty {
+  margin-bottom: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.today-state-table {
+  display: grid;
+  gap: 6px;
+}
+
+.today-state-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(48px, 0.72fr));
+  align-items: center;
+  gap: 8px;
+  border-top: 2px dashed rgba(45, 42, 36, 0.22);
+  padding-top: 7px;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.today-state-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.today-state-row.is-head {
+  color: rgba(45, 42, 36, 0.7);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.today-state-row strong,
+.today-state-row span {
+  min-width: 0;
+}
+
+.today-state-row strong {
+  font-size: 0.8rem;
+}
+
+.today-state-row span:not(:first-child) {
+  text-align: right;
+}
+
+.today-state-row .is-positive {
+  color: #285c4d;
+}
+
+.today-state-row .is-negative {
+  color: #8c4d26;
+}
+
+.drift-empty {
+  color: rgba(45, 42, 36, 0.72);
+}
+
+.drift-log-list {
+  display: grid;
+  gap: 12px;
+}
+
+.drift-log-entry {
+  display: grid;
+  gap: 9px;
+  border-top: 3px dashed rgba(45, 42, 36, 0.34);
+  padding-top: 12px;
+}
+
+.drift-log-entry:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.drift-log-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.drift-log-head strong {
+  color: var(--rust);
+  font-size: 0.86rem;
+}
+
+.drift-log-head span {
+  font-size: 0.68rem;
+  line-height: 1.45;
+  text-align: right;
+  opacity: 0.76;
+}
+
+.drift-log-event {
+  margin-bottom: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.drift-delta-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.drift-delta-list span {
+  border: 2px solid var(--ink);
+  background: rgba(255, 255, 255, 0.44);
+  padding: 3px 7px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.drift-delta-list .is-positive {
+  color: #285c4d;
+}
+
+.drift-delta-list .is-negative {
+  color: #8c4d26;
+}
+
+.drift-next-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.drift-next-state small {
+  font-size: 0.68rem;
+  line-height: 1.4;
+  opacity: 0.82;
+}
+
+.drift-reason-list {
+  display: grid;
+  gap: 6px;
+}
+
+.drift-reason-list p {
+  margin-bottom: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
 .map-modal {
   position: fixed;
   z-index: 20;

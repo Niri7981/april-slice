@@ -22,13 +22,40 @@ import stationAfterSchoolScene from "../assets/pixel/scenes/scene_station_after_
 import clockAfternoonImage from "../assets/pixel/ui/clock_afternoon.png";
 import clockMorningImage from "../assets/pixel/ui/clock_morning.png";
 import clockNightImage from "../assets/pixel/ui/clock_night.png";
+import {
+  resolveEchoOutcome,
+  type DailyEchoRecord,
+  type EchoResolution,
+} from "../game/echoResolution";
+import { buildDayRecord, type DayRecord } from "../game/dayRecord";
+import {
+  createInitialRunState,
+  type AgentBrainMemory,
+  type DriftLogEntry,
+  type EchoTrace as RunEchoTrace,
+  type RunSceneId,
+  type RunStateSnapshot,
+  type RunTimeOfDay,
+} from "../game/runState";
+import {
+  clearRunSaveState,
+  loadRunSaveState,
+  persistRunSaveState,
+} from "../game/saveState";
+import {
+  getDailyWindowProfile,
+  type AgentSignalState,
+  type AgentStateDelta,
+  type StateDriftReasonCode,
+} from "../game/stateDrift";
+import { type RelationshipState } from "../game/relationshipDrift";
 import { aprilScenario } from "../game/world";
 import type { AgentBrainInput, AgentReaction } from "../llm/brainTypes";
 import { resolveAgentBrainFake } from "../llm/fakeResolver";
 
 type Language = "zh" | "en";
-type SceneId = "homeRoom" | "corridor" | "classroom" | "station" | "harbor";
-type TimeOfDay = "morning" | "afternoon" | "night";
+type SceneId = RunSceneId;
+type TimeOfDay = RunTimeOfDay;
 type Direction = "up" | "down" | "left" | "right";
 
 type PlayerSnapshot = {
@@ -105,18 +132,7 @@ type AutoMovePlan = {
   responseText: string;
 };
 
-type EchoTrace =
-  | {
-      id: string;
-      kind: "note";
-      text: string;
-    }
-  | {
-      id: string;
-      kind: "spatial";
-      scene: SceneId;
-      labelKey: TouchZone["labelKey"];
-    };
+type EchoTrace = RunEchoTrace;
 
 type TimeSlotCopy = {
   id: TimeOfDay;
@@ -150,9 +166,15 @@ type DailyWindowProfile = {
   reason: DailyWindowReason;
 };
 
-type AgentBrainMemory = {
-  recentDiary: string[];
-  recentReactions: AgentReaction[];
+type AgentStateMeterTone = "rust" | "sea" | "moss" | "ink";
+
+type AgentStateCopy = Record<keyof AgentSignalState, string>;
+
+type RelationshipCopy = {
+  id: string;
+  name: string;
+  role: string;
+  note: string;
 };
 
 const initialPlayer: PlayerSnapshot = {
@@ -163,41 +185,35 @@ const initialPlayer: PlayerSnapshot = {
   walkFrame: 0,
 };
 
-const agentSignalBaseline = {
+const initialAgentState: AgentSignalState = {
   pressure: 64,
   loneliness: 57,
+  futureSense: 38,
+  selfSense: 46,
+  receptivity: 52,
+  autonomy: 58,
   trust: 48,
 };
 
-const getDailyWindowProfile = (): DailyWindowProfile => {
-  const { pressure, loneliness, trust } = agentSignalBaseline;
+const buildRelationships = (
+  relationships: Array<{
+    name: string;
+    role: string;
+    warmth: number;
+    tension: number;
+    note: string;
+  }>,
+): RelationshipState[] =>
+  relationships.map((relationship, index) => ({
+    id: `relationship-${index}`,
+    name: relationship.name,
+    role: relationship.role,
+    warmth: relationship.warmth,
+    tension: relationship.tension,
+    note: relationship.note,
+  }));
 
-  if (pressure >= 70 && trust <= 45) {
-    return {
-      count: 0,
-      reason: "guarded",
-    };
-  }
-
-  if (loneliness >= 62 && trust >= 58) {
-    return {
-      count: 2,
-      reason: "wideOpen",
-    };
-  }
-
-  if (loneliness >= 55 || trust >= 48) {
-    return {
-      count: 1,
-      reason: "open",
-    };
-  }
-
-  return {
-    count: 0,
-    reason: "guarded",
-  };
-};
+const initialSaveState = loadRunSaveState();
 
 const sceneMaps: Record<SceneId, SceneMap> = {
   homeRoom: {
@@ -616,6 +632,8 @@ const timeClock = {
   }
 >;
 
+const driftLogLimit = 6;
+
 const copy = {
   zh: {
     monthChipPrefix: "四月",
@@ -811,13 +829,52 @@ const copy = {
     openingHand:
       "敏感 / 表达 / 抗拒束缚。她想被理解，却总在真正开口前先退半步。",
     stateTitle: "状态",
-    agentState: [
-      { label: "压力", value: 64, tone: "rust" },
-      { label: "孤独", value: 57, tone: "sea" },
-      { label: "未来感", value: 38, tone: "moss" },
-      { label: "自我感", value: 46, tone: "ink" },
-    ],
+    agentState: {
+      pressure: "压力",
+      loneliness: "孤独",
+      futureSense: "未来感",
+      selfSense: "自我感",
+      receptivity: "接纳度",
+      autonomy: "自主性",
+      trust: "信任",
+    },
+    todayStateTitle: "今日状态表",
+    todayStateHint: "看今天从哪里出发，又被回声推到了哪里。",
+    todayStateColumns: {
+      metric: "维度",
+      start: "起始",
+      current: "当前",
+      change: "变化",
+    },
+    stateDriftTitle: "状态漂移",
+    stateDriftHint: "最近几次回声怎样真正改动了她。",
+    stateDriftEmpty: "还没有发生状态漂移。等第一次回声落下以后，这里会开始留下痕迹。",
+    stateDriftEvent: {
+      note: "纸条",
+      spatial: "轻触碰",
+    },
+    stateDriftReason: {
+      reaction_accepted: "她把这次靠近收下了，所以孤独下降、接纳和信任微微上升。",
+      reaction_hesitated: "她迟疑了，压力变高了一点，也更想守住自己的步调。",
+      reaction_resisted: "她本能地往后收，压力和自主性上升，信任与接纳下降。",
+      reaction_misread: "她误读了这次靠近，信任受损，但自我感更用力地回弹了一点。",
+      reaction_delayed: "她没有立刻回应，这件事更像被推迟到了未来。",
+      reaction_transformed: "她把影响改写成自己的动作，所以自主性、自我感和未来感上升。",
+      note_long_pressure: "这张纸条有点太重了，给了她额外的一点压力。",
+      note_measured_trust: "这句话长度刚好，更像温和靠近，所以补了一点信任。",
+      night_acceptance_opening: "夜里收下的话更容易停留，接纳度又开了一点。",
+      spatial_distance_future: "窗、铁轨和水面会把她的注意力往更远处拉，未来感上升。",
+      spatial_distance_relief: "靠近水面或铁轨让她稍微松了一口气，压力下降。",
+      spatial_threshold_push: "门口和黑板像阈值，既增加压力，也逼她更主动地站稳自己。",
+      spatial_anchor_self: "书桌、床边、书包和长椅更像自我锚点，会增强一点自我感。",
+      school_friction: "学校场景里的迟疑会额外摩擦到她，压力再加一点。",
+      distance_release: "在车站或海边收下影响时，她更容易松开一点，也更能想象以后。",
+      echo_overload: "当天 Echo 已经偏多，这次靠近又多添了一层负担。",
+      acceptance_chain: "连续几次被温和接住之后，她会再多信一点，也没那么孤单。",
+      resistance_aftertaste: "前面的抗拒还留着余味，所以这次误读又额外伤到一点信任。",
+    },
     relationshipTitle: "关系温度",
+    resetRun: "新开一局",
     warmthLabel: "温度",
     tensionLabel: "张力",
     relationships: [
@@ -1049,13 +1106,71 @@ const copy = {
     openingHand:
       "Sensitive / expressive / resistant to being contained. She wants to be understood, but steps back before she speaks plainly.",
     stateTitle: "State",
-    agentState: [
-      { label: "Pressure", value: 64, tone: "rust" },
-      { label: "Loneliness", value: 57, tone: "sea" },
-      { label: "Future Sense", value: 38, tone: "moss" },
-      { label: "Self Sense", value: 46, tone: "ink" },
-    ],
+    agentState: {
+      pressure: "Pressure",
+      loneliness: "Loneliness",
+      futureSense: "Future Sense",
+      selfSense: "Self Sense",
+      receptivity: "Receptivity",
+      autonomy: "Autonomy",
+      trust: "Trust",
+    },
+    todayStateTitle: "Today State Sheet",
+    todayStateHint: "See where today began, and where the echoes have pushed her so far.",
+    todayStateColumns: {
+      metric: "Metric",
+      start: "Start",
+      current: "Current",
+      change: "Change",
+    },
+    stateDriftTitle: "State Drift",
+    stateDriftHint: "How the most recent echoes actually shifted her state.",
+    stateDriftEmpty:
+      "No state drift yet. After the first echo lands, the traces will start to collect here.",
+    stateDriftEvent: {
+      note: "Note",
+      spatial: "Light Touch",
+    },
+    stateDriftReason: {
+      reaction_accepted:
+        "She let the closeness in, so loneliness eased while receptivity and trust rose slightly.",
+      reaction_hesitated:
+        "She hesitated. Pressure rose a little, and she leaned harder into keeping her own pace.",
+      reaction_resisted:
+        "She pulled back by instinct. Pressure and autonomy rose, while trust and receptivity dropped.",
+      reaction_misread:
+        "She misread the approach. Trust was damaged, but her sense of self pushed back a little.",
+      reaction_delayed:
+        "She did not answer yet. The influence was deferred into her sense of the future.",
+      reaction_transformed:
+        "She rewrote the influence into her own movement, raising autonomy, self sense, and future sense.",
+      note_long_pressure:
+        "The note carried a little too much weight, adding extra pressure.",
+      note_measured_trust:
+        "The note was measured enough to feel like a gentle approach, so it added trust.",
+      night_acceptance_opening:
+        "Accepted words linger more easily at night, opening receptivity a little further.",
+      spatial_distance_future:
+        "Windows, tracks, and water pull her attention outward, increasing future sense.",
+      spatial_distance_relief:
+        "Water and tracks give her a little room to breathe, lowering pressure.",
+      spatial_threshold_push:
+        "Doorways and blackboards act like thresholds, raising pressure but also pushing autonomy.",
+      spatial_anchor_self:
+        "Desk, bedside, schoolbag, and bench act like self-anchors, lifting self sense slightly.",
+      school_friction:
+        "Hesitation inside school spaces rubs harder against her, adding more pressure.",
+      distance_release:
+        "At the station or harbor, receiving the influence lets her loosen slightly and imagine farther ahead.",
+      echo_overload:
+        "The day was already carrying several echoes, so this one added extra strain.",
+      acceptance_chain:
+        "After being gently received several times in a row, she trusts a little more and feels less alone.",
+      resistance_aftertaste:
+        "The aftertaste of earlier resistance made this misreading hurt trust a little more.",
+    },
     relationshipTitle: "Relationship Warmth",
+    resetRun: "New Run",
     warmthLabel: "Warmth",
     tensionLabel: "Tension",
     relationships: [
@@ -1085,29 +1200,56 @@ const copy = {
 } satisfies Record<Language, Record<string, unknown>>;
 
 export function App() {
-  const [dailyWindowProfile, setDailyWindowProfile] = useState<DailyWindowProfile>(
-    () => getDailyWindowProfile(),
+  const defaultRunState = createInitialRunState({
+    agentState: initialAgentState,
+    relationships: buildRelationships(copy.zh.relationships),
+    openingText: aprilScenario.openingText,
+  });
+  const savedRunState: RunStateSnapshot = initialSaveState ?? defaultRunState;
+  const [agentState, setAgentState] = useState<AgentSignalState>(
+    savedRunState.agentState,
   );
-  const [language, setLanguage] = useState<Language>("zh");
+  const [dayStartAgentState, setDayStartAgentState] = useState<AgentSignalState>(
+    savedRunState.dayStartAgentState,
+  );
+  const [dayStartRelationships, setDayStartRelationships] = useState<RelationshipState[]>(
+    () => savedRunState.dayStartRelationships,
+  );
+  const [dailyWindowProfile, setDailyWindowProfile] = useState<DailyWindowProfile>(() =>
+    getDailyWindowProfile(savedRunState.agentState),
+  );
+  const [language, setLanguage] = useState<Language>(savedRunState.language);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
   const [isDaySummaryOpen, setIsDaySummaryOpen] = useState(false);
-  const [activeScene, setActiveScene] = useState<SceneId>("homeRoom");
-  const [activeTimeOfDay, setActiveTimeOfDay] = useState<TimeOfDay>("morning");
-  const [gameDay, setGameDay] = useState(1);
+  const [activeScene, setActiveScene] = useState<SceneId>(
+    savedRunState.activeScene,
+  );
+  const [activeTimeOfDay, setActiveTimeOfDay] = useState<TimeOfDay>(
+    savedRunState.activeTimeOfDay,
+  );
+  const [gameDay, setGameDay] = useState(savedRunState.gameDay);
   const [playerView, setPlayerView] = useState<PlayerSnapshot>(initialPlayer);
-  const [usedEchoes, setUsedEchoes] = useState(0);
+  const [usedEchoes, setUsedEchoes] = useState(savedRunState.usedEchoes);
   const [isNoteEchoOpen, setIsNoteEchoOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
-  const [sentNote, setSentNote] = useState("");
-  const [visitedScenes, setVisitedScenes] = useState<SceneId[]>(["homeRoom"]);
-  const [echoTraces, setEchoTraces] = useState<EchoTrace[]>([]);
+  const [sentNote, setSentNote] = useState(savedRunState.sentNote);
+  const [visitedScenes, setVisitedScenes] = useState<SceneId[]>(savedRunState.visitedScenes);
+  const [echoTraces, setEchoTraces] = useState<EchoTrace[]>(savedRunState.echoTraces);
   const [brainMemory, setBrainMemory] = useState<AgentBrainMemory>({
-    recentDiary: [],
-    recentReactions: [],
+    recentDiary: savedRunState.brainMemory.recentDiary,
+    recentReactions: savedRunState.brainMemory.recentReactions,
   });
-  const [noteFloatKey, setNoteFloatKey] = useState(0);
-  const [sceneText, setSceneText] = useState(aprilScenario.openingText);
+  const [dailyEchoRecords, setDailyEchoRecords] = useState<DailyEchoRecord[]>(
+    savedRunState.dailyEchoRecords,
+  );
+  const [dayRecords, setDayRecords] = useState<DayRecord[]>(savedRunState.dayRecords);
+  const [relationships, setRelationships] = useState<RelationshipState[]>(
+    savedRunState.relationships,
+  );
+  const [driftLog, setDriftLog] = useState<DriftLogEntry[]>(savedRunState.driftLog);
+  const [noteFloatKey, setNoteFloatKey] = useState(savedRunState.noteFloatKey);
+  const [sceneText, setSceneText] = useState(savedRunState.sceneText);
   const [isTouchMode, setIsTouchMode] = useState(false);
   const [pendingTouchZone, setPendingTouchZone] = useState<TouchZone | null>(
     null,
@@ -1121,7 +1263,90 @@ export function App() {
   const autoMovePlanRef = useRef<AutoMovePlan | null>(autoMovePlan);
   const dayFlowStartRef = useRef<number | null>(null);
   const activeTimeOfDayRef = useRef<TimeOfDay>("morning");
+  const agentStateRef = useRef<AgentSignalState>(savedRunState.agentState);
+  const dayStartAgentStateRef = useRef<AgentSignalState>(savedRunState.dayStartAgentState);
+  const dayStartRelationshipsRef = useRef<RelationshipState[]>(
+    savedRunState.dayStartRelationships,
+  );
+  const relationshipsRef = useRef<RelationshipState[]>(savedRunState.relationships);
+  const dailyEchoRecordsRef = useRef<DailyEchoRecord[]>(savedRunState.dailyEchoRecords);
+  const visitedScenesRef = useRef<SceneId[]>(savedRunState.visitedScenes);
   const text = copy[language];
+  const relationshipCopies: RelationshipCopy[] = text.relationships.map(
+    (relationship, index) => ({
+      id: `relationship-${index}`,
+      name: relationship.name,
+      role: relationship.role,
+      note: relationship.note,
+    }),
+  );
+  const stateFields: Array<{
+    key: keyof AgentSignalState;
+    label: string;
+    tone?: AgentStateMeterTone;
+    value: number;
+  }> = [
+    {
+      key: "pressure",
+      label: text.agentState.pressure,
+      tone: "rust",
+      value: agentState.pressure,
+    },
+    {
+      key: "loneliness",
+      label: text.agentState.loneliness,
+      tone: "sea",
+      value: agentState.loneliness,
+    },
+    {
+      key: "futureSense",
+      label: text.agentState.futureSense,
+      tone: "moss",
+      value: agentState.futureSense,
+    },
+    {
+      key: "selfSense",
+      label: text.agentState.selfSense,
+      tone: "ink",
+      value: agentState.selfSense,
+    },
+    {
+      key: "receptivity",
+      label: text.agentState.receptivity,
+      value: agentState.receptivity,
+    },
+    {
+      key: "autonomy",
+      label: text.agentState.autonomy,
+      value: agentState.autonomy,
+    },
+    {
+      key: "trust",
+      label: text.agentState.trust,
+      value: agentState.trust,
+    },
+  ];
+  const stateMeters = stateFields.filter(
+    (state): state is typeof state & { tone: AgentStateMeterTone } => Boolean(state.tone),
+  );
+  const todayStateRows = stateFields.map((state) => {
+    const startValue = dayStartAgentState[state.key];
+    const change = state.value - startValue;
+
+    return {
+      ...state,
+      startValue,
+      change,
+    };
+  });
+  const stateDeltaRows = (delta: AgentStateDelta) =>
+    stateFields
+      .map((state) => ({
+        key: state.key,
+        label: state.label,
+        value: delta[state.key] ?? 0,
+      }))
+      .filter((row) => row.value !== 0);
   const activeSceneMap = sceneMaps[activeScene];
   const activeSceneName = text.sceneNames[activeScene];
   const activeSceneImage =
@@ -1157,23 +1382,8 @@ export function App() {
       summary: text.openingHand,
       cards: text.openingHand.split(" / "),
     },
-    currentState: {
-      pressure: 64,
-      loneliness: 57,
-      futureSense: 38,
-      selfSense: 46,
-      receptivity: 52,
-      autonomy: 58,
-      trust: agentSignalBaseline.trust,
-    },
-    relationships: text.relationships.map((relationship, index) => ({
-      id: `relationship-${index}`,
-      name: relationship.name,
-      role: relationship.role,
-      warmth: relationship.warmth,
-      tension: relationship.tension,
-      note: relationship.note,
-    })),
+    currentState: agentState,
+    relationships,
     dayContext: {
       day: gameDay,
       timeOfDay: activeTimeOfDay,
@@ -1208,6 +1418,43 @@ export function App() {
       recentDiary: [...current.recentDiary, diaryFragment].slice(-maxBrainMemory),
       recentReactions: [...current.recentReactions, reaction].slice(-maxBrainMemory),
     }));
+  };
+  const applyEchoResolution = (
+    input: AgentBrainInput,
+    resolution: EchoResolution,
+  ) => {
+    const { brainOutput, record, relationshipDrift, stateDrift } = resolution;
+    const entry: DriftLogEntry = {
+      id: `${input.dayContext.day}-${input.dayContext.timeOfDay}-${Date.now()}`,
+      event:
+        input.event.kind === "note"
+          ? {
+              kind: "note",
+              noteText: input.event.noteText ?? "",
+            }
+          : {
+              kind: "spatial",
+              scene: input.event.scene as SceneId,
+              target: input.event.spatialTarget as TouchZone["labelKey"],
+            },
+      reaction: brainOutput.behavior.reaction,
+      delta: stateDrift.delta,
+      nextState: stateDrift.nextState,
+      reasons: stateDrift.reasons,
+      day: input.dayContext.day,
+      timeOfDay: input.dayContext.timeOfDay as TimeOfDay,
+      scene: input.dayContext.scene as SceneId,
+    };
+
+    setAgentState(stateDrift.nextState);
+    setRelationships(relationshipDrift.nextRelationships);
+    setDailyWindowProfile(getDailyWindowProfile(stateDrift.nextState));
+    setDriftLog((current) => [entry, ...current].slice(0, driftLogLimit));
+    setDailyEchoRecords((current) => {
+      const nextRecords = [...current, record];
+      dailyEchoRecordsRef.current = nextRecords;
+      return nextRecords;
+    });
   };
   const daySummaryLines = [
     brainMemory.recentReactions.length > 0
@@ -1244,6 +1491,53 @@ export function App() {
           )
           .join(" / ")
       : text.diaryModal.emptyTrace;
+  const resetRun = () => {
+    clearRunSaveState();
+    const resetRunState = createInitialRunState({
+      agentState: initialAgentState,
+      relationships: buildRelationships(copy.zh.relationships),
+      openingText: aprilScenario.openingText,
+    });
+    dayFlowStartRef.current = null;
+    keysPressed.current.clear();
+    activeSceneRef.current = resetRunState.activeScene;
+    activeTimeOfDayRef.current = resetRunState.activeTimeOfDay;
+    agentStateRef.current = resetRunState.agentState;
+    dayStartAgentStateRef.current = resetRunState.dayStartAgentState;
+    dayStartRelationshipsRef.current = resetRunState.dayStartRelationships;
+    relationshipsRef.current = resetRunState.relationships;
+    dailyEchoRecordsRef.current = [];
+    visitedScenesRef.current = resetRunState.visitedScenes;
+    setLanguage(resetRunState.language);
+    setAgentState(resetRunState.agentState);
+    setDayStartAgentState(resetRunState.dayStartAgentState);
+    setDayStartRelationships(resetRunState.dayStartRelationships);
+    setDailyWindowProfile(getDailyWindowProfile(resetRunState.agentState));
+    setGameDay(resetRunState.gameDay);
+    setActiveScene(resetRunState.activeScene);
+    setActiveTimeOfDay(resetRunState.activeTimeOfDay);
+    setPlayerView(initialPlayer);
+    playerRef.current = initialPlayer;
+    setUsedEchoes(resetRunState.usedEchoes);
+    setIsNoteEchoOpen(false);
+    setNoteDraft("");
+    setSentNote(resetRunState.sentNote);
+    setVisitedScenes(resetRunState.visitedScenes);
+    setEchoTraces(resetRunState.echoTraces);
+    setBrainMemory(resetRunState.brainMemory);
+    setDailyEchoRecords([]);
+    setDayRecords([]);
+    setRelationships(resetRunState.relationships);
+    setDriftLog(resetRunState.driftLog);
+    setNoteFloatKey(resetRunState.noteFloatKey);
+    setSceneText(resetRunState.sceneText);
+    setIsTouchMode(false);
+    setPendingTouchZone(null);
+    setAutoMovePlan(null);
+    setIsMapOpen(false);
+    setIsDiaryOpen(false);
+    setIsDaySummaryOpen(false);
+  };
   const handleSceneSwitch = (transition: SceneTransition) => {
     setActiveScene(transition.target);
   };
@@ -1286,26 +1580,26 @@ export function App() {
       text: trimmedNote,
     };
     const nextEchoTraces = [...echoTraces, nextTrace];
-    const brainOutput = resolveAgentBrainFake(
-      buildBrainInput(
-        {
-          kind: "note",
-          noteText: trimmedNote,
-        },
-        trimmedNote,
-        nextEchoTraces
-          .filter(
-            (
-              trace,
-            ): trace is Extract<EchoTrace, { kind: "spatial" }> =>
-              trace.kind === "spatial",
-          )
-          .map((trace) => ({
-            scene: trace.scene,
-            target: trace.labelKey,
-          })),
-      ),
+    const brainInput = buildBrainInput(
+      {
+        kind: "note",
+        noteText: trimmedNote,
+      },
+      trimmedNote,
+      nextEchoTraces
+        .filter(
+          (
+            trace,
+          ): trace is Extract<EchoTrace, { kind: "spatial" }> =>
+            trace.kind === "spatial",
+        )
+        .map((trace) => ({
+          scene: trace.scene,
+          target: trace.labelKey,
+        })),
     );
+    const resolution = resolveEchoOutcome(brainInput, resolveAgentBrainFake);
+    const { brainOutput } = resolution;
 
     setSentNote(trimmedNote);
     setEchoTraces(nextEchoTraces);
@@ -1318,6 +1612,7 @@ export function App() {
       brainOutput.diary.fragment,
       brainOutput.behavior.reaction,
     );
+    applyEchoResolution(brainInput, resolution);
     setSceneText(brainOutput.behavior.outwardText);
   };
   const toggleTouchMode = () => {
@@ -1364,27 +1659,27 @@ export function App() {
       labelKey: pendingTouchZone.labelKey,
     };
     const nextEchoTraces = [...echoTraces, nextTrace];
-    const brainOutput = resolveAgentBrainFake(
-      buildBrainInput(
-        {
-          kind: "spatial",
-          scene: activeScene,
-          spatialTarget: pendingTouchZone.labelKey,
-        },
-        latestNoteTrace?.text,
-        nextEchoTraces
-          .filter(
-            (
-              trace,
-            ): trace is Extract<EchoTrace, { kind: "spatial" }> =>
-              trace.kind === "spatial",
-          )
-          .map((trace) => ({
-            scene: trace.scene,
-            target: trace.labelKey,
-          })),
-      ),
+    const brainInput = buildBrainInput(
+      {
+        kind: "spatial",
+        scene: activeScene,
+        spatialTarget: pendingTouchZone.labelKey,
+      },
+      latestNoteTrace?.text,
+      nextEchoTraces
+        .filter(
+          (
+            trace,
+          ): trace is Extract<EchoTrace, { kind: "spatial" }> =>
+            trace.kind === "spatial",
+        )
+        .map((trace) => ({
+          scene: trace.scene,
+          target: trace.labelKey,
+        })),
     );
+    const resolution = resolveEchoOutcome(brainInput, resolveAgentBrainFake);
+    const { brainOutput } = resolution;
 
     setUsedEchoes((current) => current + 1);
     setEchoTraces(nextEchoTraces);
@@ -1394,6 +1689,7 @@ export function App() {
       brainOutput.diary.fragment,
       brainOutput.behavior.reaction,
     );
+    applyEchoResolution(brainInput, resolution);
     setAutoMovePlan({
       targetX: pendingTouchZone.approachPoint.x,
       targetY: pendingTouchZone.approachPoint.y,
@@ -1409,12 +1705,78 @@ export function App() {
   }, [activeScene]);
 
   useEffect(() => {
+    visitedScenesRef.current = visitedScenes;
+  }, [visitedScenes]);
+
+  useEffect(() => {
     activeTimeOfDayRef.current = activeTimeOfDay;
   }, [activeTimeOfDay]);
 
   useEffect(() => {
+    agentStateRef.current = agentState;
+  }, [agentState]);
+
+  useEffect(() => {
+    dayStartAgentStateRef.current = dayStartAgentState;
+  }, [dayStartAgentState]);
+
+  useEffect(() => {
+    dayStartRelationshipsRef.current = dayStartRelationships;
+  }, [dayStartRelationships]);
+
+  useEffect(() => {
+    relationshipsRef.current = relationships;
+  }, [relationships]);
+
+  useEffect(() => {
+    dailyEchoRecordsRef.current = dailyEchoRecords;
+  }, [dailyEchoRecords]);
+
+  useEffect(() => {
     autoMovePlanRef.current = autoMovePlan;
   }, [autoMovePlan]);
+
+  useEffect(() => {
+    persistRunSaveState({
+      gameDay,
+      language,
+      activeScene,
+      activeTimeOfDay,
+      agentState,
+      dayStartAgentState,
+      relationships,
+      dayStartRelationships,
+      usedEchoes,
+      sentNote,
+      visitedScenes,
+      echoTraces,
+      brainMemory,
+      dailyEchoRecords,
+      dayRecords,
+      driftLog,
+      sceneText,
+      noteFloatKey,
+    });
+  }, [
+    activeScene,
+    activeTimeOfDay,
+    agentState,
+    brainMemory,
+    dailyEchoRecords,
+    dayRecords,
+    dayStartAgentState,
+    dayStartRelationships,
+    driftLog,
+    echoTraces,
+    gameDay,
+    language,
+    noteFloatKey,
+    relationships,
+    sceneText,
+    sentNote,
+    usedEchoes,
+    visitedScenes,
+  ]);
 
   useEffect(() => {
     const nextSpawn = sceneMaps[activeScene].spawn;
@@ -1464,9 +1826,22 @@ export function App() {
       }
 
       if (elapsed >= dayDurationMs) {
+        const completedDayRecord = buildDayRecord({
+          day: gameDay,
+          visitedScenes: visitedScenesRef.current,
+          echoes: dailyEchoRecordsRef.current,
+          stateStart: dayStartAgentStateRef.current,
+          stateEnd: agentStateRef.current,
+          relationshipsStart: dayStartRelationshipsRef.current,
+          relationshipsEnd: relationshipsRef.current,
+        });
+
         dayFlowStartRef.current = timestamp;
+        setDayRecords((current) => [...current, completedDayRecord]);
         setGameDay((current) => current + 1);
-        setDailyWindowProfile(getDailyWindowProfile());
+        setDayStartAgentState(agentStateRef.current);
+        setDayStartRelationships(relationshipsRef.current);
+        setDailyWindowProfile(getDailyWindowProfile(agentStateRef.current));
         setUsedEchoes(0);
         setSentNote("");
         setEchoTraces([]);
@@ -1474,6 +1849,8 @@ export function App() {
           recentDiary: [],
           recentReactions: [],
         });
+        setDailyEchoRecords([]);
+        setDriftLog([]);
         setVisitedScenes(["homeRoom"]);
         setActiveScene("homeRoom");
         setIsDaySummaryOpen(false);
@@ -1634,6 +2011,9 @@ export function App() {
                 EN
               </button>
             </div>
+            <button onClick={resetRun} type="button">
+              {text.resetRun}
+            </button>
             <span className="month-chip">
               <CalendarDays size={16} />
               {monthChip}
@@ -1677,6 +2057,8 @@ export function App() {
             <nav className="time-strip" aria-label="April time slots">
               {text.timeSlots.map((slot) => {
                 const Icon = slot.icon;
+                const sceneLabel =
+                  activeTimeOfDay === slot.id ? activeSceneName : slot.scene;
 
                 return (
                   <article
@@ -1684,14 +2066,14 @@ export function App() {
                       activeTimeOfDay === slot.id ? "is-active" : ""
                     }`}
                     key={slot.id}
-                  >
-                    <div className="time-card-top">
-                      <Icon size={18} />
-                      <span>{slot.label}</span>
-                    </div>
-                    <strong>{slot.scene}</strong>
-                    <small>{slot.note}</small>
-                  </article>
+                    >
+                      <div className="time-card-top">
+                        <Icon size={18} />
+                        <span>{slot.label}</span>
+                      </div>
+                      <strong>{sceneLabel}</strong>
+                      <small>{slot.note}</small>
+                    </article>
                 );
               })}
             </nav>
@@ -1835,8 +2217,8 @@ export function App() {
         <section className="card">
           <p className="eyebrow">{text.stateTitle}</p>
           <div className="stat-list">
-            {text.agentState.map((state) => (
-              <div className="stat-row" key={state.label}>
+            {stateMeters.map((state) => (
+              <div className="stat-row" key={state.key}>
                 <div>
                   <span>{state.label}</span>
                   <strong>{state.value}</strong>
@@ -1852,15 +2234,57 @@ export function App() {
           </div>
         </section>
 
+        <section className="card">
+          <p className="eyebrow">{text.todayStateTitle}</p>
+          <p className="drift-card-hint">{text.todayStateHint}</p>
+          <div className="today-state-table" role="table" aria-label={text.todayStateTitle}>
+            <div className="today-state-row is-head" role="row">
+              <span role="columnheader">{text.todayStateColumns.metric}</span>
+              <span role="columnheader">{text.todayStateColumns.start}</span>
+              <span role="columnheader">{text.todayStateColumns.current}</span>
+              <span role="columnheader">{text.todayStateColumns.change}</span>
+            </div>
+            {todayStateRows.map((row) => (
+              <div className="today-state-row" key={row.key} role="row">
+                <strong role="cell">{row.label}</strong>
+                <span role="cell">{row.startValue}</span>
+                <span role="cell">{row.value}</span>
+                <span
+                  className={
+                    row.change > 0
+                      ? "is-positive"
+                      : row.change < 0
+                        ? "is-negative"
+                        : ""
+                  }
+                  role="cell"
+                >
+                  {row.change > 0 ? "+" : ""}
+                  {row.change}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="card relationships-card">
           <p className="eyebrow">{text.relationshipTitle}</p>
           <div className="relationship-list">
-            {text.relationships.map((relationship) => (
-              <article className="relationship" key={relationship.name}>
+            {relationships.map((relationship) => {
+              const localized =
+                relationshipCopies.find((copy) => copy.id === relationship.id) ?? {
+                  id: relationship.id,
+                  name: relationship.name,
+                  role: relationship.role,
+                  note: relationship.note,
+                };
+
+              return (
+              <article className="relationship" key={relationship.id}>
                 <div className="relationship-head">
                   <div>
-                    <strong>{relationship.name}</strong>
-                    <small>{relationship.role}</small>
+                    <strong>{localized.name}</strong>
+                    <small>{localized.role}</small>
                   </div>
                   <span>{relationship.warmth}°</span>
                 </div>
@@ -1878,10 +2302,73 @@ export function App() {
                     </span>
                   </label>
                 </div>
-                <p>{relationship.note}</p>
+                <p>{localized.note}</p>
               </article>
-            ))}
+            );
+            })}
           </div>
+        </section>
+
+        <section className="card drift-card">
+          <p className="eyebrow">{text.stateDriftTitle}</p>
+          <p className="drift-card-hint">{text.stateDriftHint}</p>
+          {driftLog.length === 0 ? (
+            <p className="drift-empty">{text.stateDriftEmpty}</p>
+          ) : (
+            <div className="drift-log-list">
+              {driftLog.map((entry) => {
+                const deltaRows = stateDeltaRows(entry.delta);
+                const eventLabel =
+                  entry.event.kind === "note"
+                    ? text.stateDriftEvent.note
+                    : text.stateDriftEvent.spatial;
+                const eventDetail =
+                  entry.event.kind === "note"
+                    ? `"${entry.event.noteText}"`
+                    : `${text.sceneNames[entry.scene]} · ${
+                        text.spatialEcho.labels[entry.event.target]
+                      }`;
+
+                return (
+                  <article className="drift-log-entry" key={entry.id}>
+                    <div className="drift-log-head">
+                      <strong>{eventLabel}</strong>
+                      <span>
+                        {text.dayLabel.replace("{day}", String(entry.day))} ·{" "}
+                        {text.timeNames[entry.timeOfDay]}
+                      </span>
+                    </div>
+                    <p className="drift-log-event">{eventDetail}</p>
+                    {deltaRows.length > 0 ? (
+                      <div className="drift-delta-list">
+                        {deltaRows.map((row) => (
+                          <span
+                            className={row.value > 0 ? "is-positive" : "is-negative"}
+                            key={row.key}
+                          >
+                            {row.label} {row.value > 0 ? "+" : ""}
+                            {row.value}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    <div className="drift-next-state">
+                      {stateMeters.map((state) => (
+                        <small key={state.key}>
+                          {state.label} {entry.nextState[state.key]}
+                        </small>
+                      ))}
+                    </div>
+                    <div className="drift-reason-list">
+                      {entry.reasons.map((reason) => (
+                        <p key={reason}>{text.stateDriftReason[reason]}</p>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
       </aside>
 
