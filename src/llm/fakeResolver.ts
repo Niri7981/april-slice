@@ -202,16 +202,7 @@ export const resolveAgentBrainFake = (input: AgentBrainInput): AgentBrainOutput 
       mood: reactionSummaryCopy[input.language][reaction],
       next: nextCopy[input.language][reaction],
     },
-    stateChanges:
-      reaction === "accepted"
-        ? { loneliness: -2, receptivity: 2 }
-        : reaction === "misread"
-          ? { trust: -1, selfSense: 1 }
-          : reaction === "hesitated"
-            ? { pressure: 1, autonomy: 1 }
-            : reaction === "delayed"
-              ? { futureSense: 1 }
-              : { autonomy: 2 },
+    stateChanges: {},
     relationshipChanges: [],
     memory: {
       internalThought:
