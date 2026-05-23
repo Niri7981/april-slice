@@ -395,99 +395,291 @@ The player sees:
 
 ## Technical Direction
 
-The MVP is a local-first browser game.
+April Slice is a local-first browser world simulation.
 
-Recommended stack:
+The mainline is not "React game screens."
 
-- Vite
-- React
-- TypeScript
-- Zustand for game state
-- Zod for LLM response validation
-- Recharts for simple state charts
-- localStorage for API config and saves
-- OpenAI-compatible API client
+The mainline is:
 
-No backend is required for MVP.
+- A continuous world
+- A real update loop
+- Player and agent as world entities
+- Local rules as gameplay truth
+- LLM as expression only
+- UI as a thin overlay
 
-Important note:
+Current technical direction:
 
-Some LLM providers may block direct browser calls with CORS. MVP can first target browser-compatible providers. A local proxy, desktop shell, or backend can be added later if needed.
+- `Vite` for build and dev workflow
+- `TypeScript` for all gameplay contracts
+- `PixiJS` for the 2D world presentation layer
+- Minimal `React` for shell UI only
+- `localStorage` for local saves
+- Local fake resolver before real LLM integration
+
+Future 3D direction:
+
+- `Three.js` for 3D world rendering
+- `Rapier` for physics if needed
+- `Howler.js` for audio
+- `GSAP` for camera and world motion polish
+- `Blender -> glTF/GLB` as the content pipeline
+
+No backend is required for the world-first prototype.
 
 ## Architecture Principle
 
-The LLM is the agent brain.
+The LLM is not the game engine.
 
-The local game engine is the world, memory, and referee.
+The local engine owns world truth.
 
-The LLM can describe and decide, but local code must:
+The world layer owns movement, timing, presence, triggers, and scheduling.
 
-- Track game phase
-- Store player input
-- Validate structured output
-- Clamp state values
-- Resolve relationship changes
-- Save the run
+The rules layer owns run truth, state drift, relationship drift, echo resolution, and day records.
+
+The LLM layer only writes expression:
+
+- behavior wording
+- diary fragments
+- internal thought
+- tone shaping
+
+The LLM must not decide gameplay truth or raw values.
+
+## UI Boundary
+
+UI layers must handle presentation and interaction only.
+
+That means UI can:
+
+- Render current game state
+- Collect player input
+- Open and close panels
+- Play animations and transitions
+- Dispatch actions into the local game engine
+
+UI must not own business truth.
+
+That means UI should not decide:
+
+- How state changes
+- How relationships change
+- Whether an Echo is valid
+- How a day resolves
+- What gets saved
+- What counts as the current run truth
+
+The goal is to keep the interface replaceable.
+
+The 2D shell, a future 3D shell, or any debug tool should all be able to sit on top of the same gameplay logic without rewriting the rules.
+
+UI is not the world.
+
+World movement, agent scheduling, collision/trigger checks, and time progression must not live in UI components.
+
+## Run State
+
+Run state means the single source of truth for one playable run.
+
+It is the complete local snapshot of "what is true right now" in the current April run.
+
+Run state should contain, at minimum:
+
+- Current day
+- Current scene
+- Current time of day
+- Current agent state values
+- Current relationships
+- Echo traces and recent memory
+- Daily echo records
+- Day records
+- Any other values needed to resume the run exactly
+
+Run state is not a UI convenience object.
+
+It is the authoritative gameplay state.
+
+UI reads from run state.
+
+The local game engine updates run state.
+
+Save/load persists run state.
+
+If a value matters for gameplay truth, it should live in run state or be derived from it.
+
+## Mainline Technical Outline
+
+This is the mainline we are building toward before any 3D rewrite.
+
+### Presentation Layer
+
+Purpose:
+Show the world, accept input, and open lightweight overlays.
+
+Core pieces:
+
+- `PixiJS`
+  Renders the 2D world, map, characters, objects, weather, and camera result.
+- `React`
+  Only for shell UI such as setup, note paper, diary view, and small menus.
+- `Camera`
+  Follows the player or shifts for events so the player feels physically present in one world.
+
+### World Layer
+
+Purpose:
+Make the world actually run.
+
+Core pieces:
+
+- `tick loop`
+  The main update loop. Each frame updates inputs, movement, time, triggers, and rendering in a stable order.
+- `map / world graph`
+  Real coordinates, regions, and connected places instead of React scene switching.
+- `entities`
+  World bodies such as `playerBody`, `agentBody`, and future echo objects or NPCs.
+- `pathfinding`
+  Lets the agent walk through the world instead of teleporting between scenes.
+- `scheduler / calendar / time`
+  Decides what time it is, where the agent should be, and when the day advances.
+- `zone triggers / interaction points`
+  Lets notes, objects, doors, and scene transitions happen through position in the world.
+- `weather / ambience`
+  Gives the world breathing room through light, atmosphere, seasonal cues, and environmental motion.
+
+### Rules Layer
+
+Purpose:
+Own gameplay truth without caring how the world is rendered.
+
+Core pieces:
+
+- `runState`
+  The authoritative snapshot for the current run.
+- `stateDrift`
+  Calculates how inner state changes after events.
+- `relationshipDrift`
+  Calculates how relationships change after events.
+- `echoResolution`
+  Resolves one echo and its consequences.
+- `dayRecord`
+  Produces the unified per-day settlement record.
+- `saveState`
+  Persists and restores the run safely.
+
+### LLM Layer
+
+Purpose:
+Generate expression, not rules.
+
+Core pieces:
+
+- `brainTypes`
+  Contract for what the model receives and returns.
+- `fakeResolver`
+  Local placeholder brain used until the world loop is stable.
+- `llmResolver`
+  Future real model entry point.
+- `promptBuilder`
+  Converts run state, memory, and day context into model input.
+- `toneFilter`
+  Keeps voice and output shape within the game tone.
+
+### Asset Pipeline
+
+Purpose:
+Keep content production compatible with a world-first architecture.
+
+Current 2D phase:
+
+- Placeholder map tiles
+- Placeholder characters
+- Placeholder interaction markers
+- Simple atmosphere effects
+
+Future 3D phase:
+
+- `Blender`
+- `glTF / GLB`
+- texture compression and runtime loading
+
+## Current Priority
+
+The current sprint priority is not more React UI.
+
+The current sprint priority is to build the two missing ribs of the product:
+
+- `World`
+- `Presence`
+
+That means the next major engineering steps are:
+
+1. Clean gameplay types so there is only one truth.
+2. Start `world/` and `entities/` scaffolding.
+3. Turn the player into a real world entity.
+4. Add camera and world graph.
+5. Add agent schedule and pathfinding.
+6. Reconnect the existing echo and memory rules back into the world.
 
 ## Folder Responsibilities
 
 ```text
 src/app
-  App shell and top-level screen composition.
+  App shell only. No gameplay world truth.
+
+src/ui
+  Small overlay UI such as setup, note paper, and diary view.
+
+src/world
+  Tick loop, map, time, weather, and world systems.
+
+src/entities
+  Player body, agent body, camera, and world entity logic.
+
+src/agentMind
+  Schedule, intent, encounters, and behavior orchestration.
 
 src/game
-  Core game types, seed generation, world config, prompt building,
-  simulation flow, and resolution logic.
+  Run state, save state, drift logic, echo resolution, and day records.
 
 src/llm
-  OpenAI-compatible API client, response schemas, and provider config.
+  Brain contracts, fake resolver, future real resolver, prompt builder,
+  and tone filtering.
 
-src/store
-  Client-side game state store.
-
-src/components
-  UI components for setup, investigation, intervention, prediction,
-  game scene, and result display.
-
-src/assets/pixel/avatars
-  Pixel avatar assets generated later.
-
-src/assets/pixel/scenes
-  Pixel scene assets generated later.
+src/assets
+  Placeholder and future production world assets.
 
 docs
-  Product notes, prompt notes, and design references.
+  Product notes, prompt notes, and world references.
 ```
 
 ## First Build Milestones
 
-1. Create the project scaffold.
-2. Define TypeScript data models.
-3. Build a fake-data playable April loop.
-4. Add the visual game screen.
-5. Add API settings.
-6. Add prompt builder and LLM client.
-7. Add response validation and resolution.
-8. Add local save.
-9. Replace placeholder visuals with pixel assets.
+1. Clean dead types and unify gameplay truth.
+2. Extract shared state key constants where gameplay fields repeat.
+3. Start the PixiJS world shell with a real tick loop.
+4. Add player entity movement and camera follow.
+5. Add agent entity shell and schedule system.
+6. Add map graph and path traversal.
+7. Reconnect echo objects and day settlement back into the world.
+8. Keep real LLM integration behind the world-first milestone.
 
 ## MVP Non-Goals
 
-- Full twelve-month game
-- Serious astrological or destiny calculation engine
+- Final 3D production build
+- Real LLM integration before the world loop is stable
 - Backend accounts
 - Cloud saves
 - Multiplayer
-- Map walking
 - Combat
-- Inventory
-- Complex animation
-- AI image generation inside the app
+- Inventory systems
+- UI-heavy HUD gameplay
+- Perfect final art before the world feels alive
 
 ## Next Design Tasks
 
-- Define the exact TypeScript data model.
-- Write the first April scenario.
-- Write the LLM prompt contract.
-- Decide the setup screen fields.
-- Decide the first fake-data run result.
+- Define the world graph for the first town slice.
+- Define player and agent entity contracts.
+- Define schedule checkpoints for one believable school day.
+- Decide the first world-based echo pickup interaction.
+- Replace button-first interaction with presence-first interaction.

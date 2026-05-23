@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  buildAgentStateShape,
+  type AgentSignalState,
+  type AgentStateDelta,
+} from "../game/agentState";
 
 export const agentReactionSchema = z.enum([
   "accepted",
@@ -31,15 +36,7 @@ export type AgentBrainInput = {
     summary: string;
     cards: string[];
   };
-  currentState: {
-    pressure: number;
-    loneliness: number;
-    futureSense: number;
-    selfSense: number;
-    receptivity: number;
-    autonomy: number;
-    trust: number;
-  };
+  currentState: AgentSignalState;
   relationships: Array<{
     id: string;
     name: string;
@@ -86,17 +83,7 @@ export const agentBrainOutputSchema = z.object({
     mood: z.string(),
     next: z.string(),
   }),
-  stateChanges: z
-    .object({
-      pressure: z.number().optional(),
-      loneliness: z.number().optional(),
-      futureSense: z.number().optional(),
-      selfSense: z.number().optional(),
-      receptivity: z.number().optional(),
-      autonomy: z.number().optional(),
-      trust: z.number().optional(),
-    })
-    .default({}),
+  stateChanges: z.object(buildAgentStateShape(() => z.number().optional())).default({}),
   relationshipChanges: z
     .array(
       z.object({
@@ -117,3 +104,5 @@ export const agentBrainOutputSchema = z.object({
 });
 
 export type AgentBrainOutput = z.infer<typeof agentBrainOutputSchema>;
+
+export type AgentBrainStateChanges = AgentStateDelta;

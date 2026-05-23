@@ -46,7 +46,7 @@ const nextCopy = {
 const reactionByNote = (input: AgentBrainInput): AgentReaction => {
   const note = input.event.noteText?.trim() ?? "";
 
-  if (input.currentState.trust <= 45 && input.currentState.autonomy >= 55) {
+  if (input.currentState.trust <= 45 && input.currentState.selfSense >= 55) {
     return "misread";
   }
 
@@ -54,7 +54,7 @@ const reactionByNote = (input: AgentBrainInput): AgentReaction => {
     return "hesitated";
   }
 
-  if (input.currentState.loneliness >= 60 || input.currentState.receptivity >= 52) {
+  if (input.currentState.loneliness >= 60 || input.currentState.trust >= 52) {
     return "accepted";
   }
 
@@ -65,7 +65,7 @@ const reactionBySpatial = (input: AgentBrainInput): AgentReaction => {
   const target = input.event.spatialTarget ?? "";
 
   if (target === "water" || target === "rail" || target === "window") {
-    return input.currentState.receptivity >= 50 ? "accepted" : "hesitated";
+    return input.currentState.trust >= 50 ? "accepted" : "hesitated";
   }
 
   if (target === "door" || target === "board") {

@@ -1,8 +1,11 @@
 import type { AgentBrainInput, AgentReaction } from "../llm/brainTypes";
+import {
+  AGENT_STATE_KEYS,
+  type AgentSignalState,
+  type AgentStateDelta,
+} from "./agentState";
 
-export type AgentSignalState = AgentBrainInput["currentState"];
-
-export type AgentStateDelta = Partial<Record<keyof AgentSignalState, number>>;
+export { AGENT_STATE_KEYS, type AgentSignalState, type AgentStateDelta };
 
 export type StateDriftReasonCode =
   | "reaction_accepted"
@@ -40,18 +43,24 @@ const addDelta = (
   delta[key] = (delta[key] ?? 0) + amount;
 };
 
+export const diffAgentState = (
+  startState: AgentSignalState,
+  endState: AgentSignalState,
+): AgentStateDelta =>
+  Object.fromEntries(
+    AGENT_STATE_KEYS.map((key) => [key, endState[key] - startState[key]]),
+  ) as AgentStateDelta;
+
 export const applyStateDelta = (
   currentState: AgentSignalState,
   delta: AgentStateDelta,
-): AgentSignalState => ({
-  pressure: clampStateValue(currentState.pressure + (delta.pressure ?? 0)),
-  loneliness: clampStateValue(currentState.loneliness + (delta.loneliness ?? 0)),
-  futureSense: clampStateValue(currentState.futureSense + (delta.futureSense ?? 0)),
-  selfSense: clampStateValue(currentState.selfSense + (delta.selfSense ?? 0)),
-  receptivity: clampStateValue(currentState.receptivity + (delta.receptivity ?? 0)),
-  autonomy: clampStateValue(currentState.autonomy + (delta.autonomy ?? 0)),
-  trust: clampStateValue(currentState.trust + (delta.trust ?? 0)),
-});
+): AgentSignalState =>
+  Object.fromEntries(
+    AGENT_STATE_KEYS.map((key) => [
+      key,
+      clampStateValue(currentState[key] + (delta[key] ?? 0)),
+    ]),
+  ) as AgentSignalState;
 
 export const getDailyWindowProfile = (
   currentState: AgentSignalState,
@@ -59,7 +68,7 @@ export const getDailyWindowProfile = (
   count: 0 | 1 | 2;
   reason: "guarded" | "open" | "wideOpen";
 } => {
-  const { pressure, loneliness, receptivity, trust } = currentState;
+  const { pressure, loneliness, selfSense, trust } = currentState;
 
   if (pressure >= 72 && trust <= 45) {
     return {
@@ -68,14 +77,14 @@ export const getDailyWindowProfile = (
     };
   }
 
-  if (loneliness >= 62 && trust >= 56 && receptivity >= 56) {
+  if (loneliness >= 62 && trust >= 56 && selfSense >= 50) {
     return {
       count: 2,
       reason: "wideOpen",
     };
   }
 
-  if (loneliness >= 55 || trust >= 48 || receptivity >= 50) {
+  if (loneliness >= 55 || trust >= 48 || selfSense >= 52) {
     return {
       count: 1,
       reason: "open",
@@ -105,21 +114,19 @@ export const resolveLocalStateDrift = (
   switch (reaction) {
     case "accepted":
       addDelta(delta, "loneliness", -2);
-      addDelta(delta, "receptivity", 2);
-      addDelta(delta, "trust", 1);
+      addDelta(delta, "trust", 2);
       reasons.push("reaction_accepted");
       break;
     case "hesitated":
       addDelta(delta, "pressure", 2);
-      addDelta(delta, "autonomy", 1);
-      addDelta(delta, "receptivity", -1);
+      addDelta(delta, "selfSense", 1);
+      addDelta(delta, "trust", -1);
       reasons.push("reaction_hesitated");
       break;
     case "resisted":
       addDelta(delta, "pressure", 1);
-      addDelta(delta, "autonomy", 2);
+      addDelta(delta, "selfSense", 2);
       addDelta(delta, "trust", -1);
-      addDelta(delta, "receptivity", -2);
       reasons.push("reaction_resisted");
       break;
     case "misread":
@@ -134,8 +141,7 @@ export const resolveLocalStateDrift = (
       reasons.push("reaction_delayed");
       break;
     case "transformed":
-      addDelta(delta, "autonomy", 2);
-      addDelta(delta, "selfSense", 2);
+      addDelta(delta, "selfSense", 3);
       addDelta(delta, "futureSense", 1);
       reasons.push("reaction_transformed");
       break;
@@ -153,7 +159,7 @@ export const resolveLocalStateDrift = (
     }
 
     if (input.dayContext.timeOfDay === "night" && reaction === "accepted") {
-      addDelta(delta, "receptivity", 1);
+      addDelta(delta, "trust", 1);
       reasons.push("night_acceptance_opening");
     }
   }
@@ -175,7 +181,7 @@ export const resolveLocalStateDrift = (
 
     if (input.event.spatialTarget === "board" || input.event.spatialTarget === "door") {
       addDelta(delta, "pressure", 1);
-      addDelta(delta, "autonomy", 1);
+      addDelta(delta, "selfSense", 1);
       reasons.push("spatial_threshold_push");
     }
 

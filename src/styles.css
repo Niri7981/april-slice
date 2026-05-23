@@ -81,6 +81,53 @@ button,
     "Courier New", Courier, monospace;
 }
 
+.world-prototype-shell {
+  display: grid;
+  min-height: 100vh;
+  gap: 14px;
+  place-items: center;
+  padding: 24px;
+}
+
+.world-prototype-label {
+  border: 3px solid var(--ink);
+  background: rgba(244, 237, 222, 0.94);
+  box-shadow: 4px 4px 0 var(--paper-shadow), 8px 8px 0 var(--ink);
+  color: var(--ink);
+  padding: 8px 12px;
+}
+
+.world-prototype-frame {
+  position: relative;
+  overflow: hidden;
+  width: min(960px, calc(100vw - 48px));
+  aspect-ratio: 960 / 620;
+  border: 4px solid var(--ink);
+  background: #20251f;
+  box-shadow:
+    8px 8px 0 var(--paper-shadow),
+    14px 14px 0 var(--ink);
+}
+
+.world-prototype-frame::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(90deg, rgba(45, 42, 36, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(45, 42, 36, 0.07) 1px, transparent 1px);
+  background-size: 8px 8px;
+  opacity: 0.24;
+}
+
+.world-prototype-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -1261,13 +1308,14 @@ h2 {
   background: var(--ink);
 }
 
-.relationships-card {
-  padding-bottom: 14px;
-}
-
 .relationship-list {
   display: grid;
   gap: 12px;
+}
+
+.relationships-paper {
+  width: min(760px, 94vw);
+  min-height: auto;
 }
 
 .relationship {

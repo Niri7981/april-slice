@@ -1,7 +1,11 @@
 import type { AgentReaction } from "../llm/brainTypes";
 import type { DailyEchoRecord } from "./echoResolution";
 import type { RelationshipState } from "./relationshipDrift";
-import type { AgentSignalState, AgentStateDelta } from "./stateDrift";
+import {
+  diffAgentState,
+  type AgentSignalState,
+  type AgentStateDelta,
+} from "./stateDrift";
 
 export type DayRelationshipDelta = {
   relationshipId: string;
@@ -29,19 +33,6 @@ export type DayRecord = {
   reactions: AgentReaction[];
   internalThoughts: string[];
 };
-
-const diffState = (
-  startState: AgentSignalState,
-  endState: AgentSignalState,
-): AgentStateDelta => ({
-  pressure: endState.pressure - startState.pressure,
-  loneliness: endState.loneliness - startState.loneliness,
-  futureSense: endState.futureSense - startState.futureSense,
-  selfSense: endState.selfSense - startState.selfSense,
-  receptivity: endState.receptivity - startState.receptivity,
-  autonomy: endState.autonomy - startState.autonomy,
-  trust: endState.trust - startState.trust,
-});
 
 const diffRelationships = (
   startRelationships: RelationshipState[],
@@ -88,7 +79,7 @@ export const buildDayRecord = ({
   echoes,
   stateStart,
   stateEnd,
-  stateDelta: diffState(stateStart, stateEnd),
+  stateDelta: diffAgentState(stateStart, stateEnd),
   relationshipsStart,
   relationshipsEnd,
   relationshipDelta: diffRelationships(relationshipsStart, relationshipsEnd),
