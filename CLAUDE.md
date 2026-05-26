@@ -76,6 +76,39 @@ April Slice 项目的工作契约。每次新会话第一时间读这份。
 
 ---
 
+## Agent 行为契约（核心，不可妥协）
+
+**agent 是独立个体，不是按表走的机器人。** 她的行为由三件事共同决定：
+
+```
+感知环境  +  内部状态  +  日程倾向   →   下一步行动
+(scene)      (state)       (schedule)
+```
+
+具体含义：
+
+1. **感知环境**：agent 每个 tick 都能"看见"当前场景里的东西——天气、时间、玩家是否在场、其他 NPC 是否在场、附近有没有触发性物件（窗、门、信件、樱花）。这些是她做决定的输入。
+2. **内部状态决定倾向**：pressure 高时她可能不想去教室、loneliness 高时她可能在走廊多停一会儿、futureSense 高时她会朝海或铁轨那边偏。状态不是数字面板，是 *行为偏移的来源*。
+3. **Schedule 是骨架不是脚本**：硬编码 schedule 给出"她大致这个时间会去哪"的倾向，但当感知 / 状态足够强时，agent 可以偏离 schedule。schedule 是引力，不是轨道。
+4. **行动从涌现，不从预写**：不要写"早上 8 点 → 走到教室"这种硬流程。要写"她现在的目标是教室；途中如果 X 则 Y"这种带条件的意图。Day 1-30 不重复，是因为环境和状态每天不同。
+
+**怎么落到代码：**
+- `agentMind/intent.ts` 不是"读 schedule 表然后返回 target node"。它是 `(env + state + schedule) → next intent`，schedule 只是其中一个输入。
+- agent 的 tick 函数不能只看时间。必须看场景、状态、附近实体。
+- LLM 接入后，"感知 → 表达"由 LLM 写；"感知 → 内部决策骨架"仍由本地规则跑（这条对应"LLM 写表达，规则写状态"）。
+
+**反例（绝对不要做）：**
+- ❌ `if (time === "8:30") agent.goto("classroom")` —— 这是 NPC 不是 agent
+- ❌ "agent 走到 A 然后走到 B 然后走到 C" 这种线性脚本
+- ❌ schedule 是 source of truth，状态只是 UI 装饰
+
+**正例（要做的）：**
+- ✅ `if (schedule.suggests("classroom") && state.pressure < 70 && !weather.isRaining) { intent = goto("classroom") }`
+- ✅ `if (player.isNear() && state.openness > threshold) { intent = pause(2s).lookAt(player) }`
+- ✅ "今天 pressure 高，所以她从家到学校多绕了一段海边路"——这是涌现，不是预写
+
+---
+
 ## 目标架构（四层）
 
 ```

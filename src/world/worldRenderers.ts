@@ -1,5 +1,36 @@
 import type { Graphics } from "pixi.js";
 import { worldSize } from "./worldConfig";
+import { worldEdges, worldNodes, type WorldNode, type WorldNodeId } from "./worldGraph";
+
+const drawWorldGraph = (graphics: Graphics) => {
+  const drawnEdges = new Set<string>();
+
+  graphics.setStrokeStyle({ color: 0x4f5f53, width: 8, alpha: 0.62 });
+  for (const [fromNodeId, nextNodeIds] of Object.entries(worldEdges) as Array<
+    [WorldNodeId, WorldNodeId[]]
+  >) {
+    const fromNode = worldNodes[fromNodeId];
+
+    for (const toNodeId of nextNodeIds) {
+      const edgeKey = [fromNodeId, toNodeId].sort().join(":");
+
+      if (drawnEdges.has(edgeKey)) {
+        continue;
+      }
+
+      drawnEdges.add(edgeKey);
+      graphics.moveTo(fromNode.x, fromNode.y);
+      graphics.lineTo(worldNodes[toNodeId].x, worldNodes[toNodeId].y);
+    }
+  }
+  graphics.stroke();
+
+  for (const node of Object.values(worldNodes) as WorldNode[]) {
+    graphics.circle(node.x, node.y, 13);
+    graphics.fill(0xf4edde);
+    graphics.stroke({ color: 0x2d2a24, width: 4 });
+  }
+};
 
 export const drawWorld = (graphics: Graphics) => {
   graphics.clear();
@@ -35,6 +66,8 @@ export const drawWorld = (graphics: Graphics) => {
   graphics.lineTo(1120, 620);
   graphics.lineTo(1510, 820);
   graphics.stroke();
+
+  drawWorldGraph(graphics);
 };
 
 export const drawAgent = (graphics: Graphics) => {
