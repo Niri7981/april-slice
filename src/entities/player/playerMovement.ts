@@ -1,5 +1,5 @@
-import type { Body, Vector } from "./body";
-import type { Size } from "../world/worldConfig";
+import type { Body, Vector } from "../core/body";
+import type { Size } from "../../world/data/worldConfig";
 
 export const playerSpeed = 230;
 

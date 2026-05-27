@@ -6,8 +6,8 @@ type NoteEchoDialogProps = {
   placeholder: string;
   draft: string;
   limit: number;
-  remainingLabel: string;
-  unit: string;
+  remainingLabel?: string;
+  unit?: string;
   cancelLabel: string;
   sendLabel: string;
   canSend: boolean;
@@ -49,10 +49,14 @@ export function NoteEchoDialog({
           value={draft}
         />
         <div className="note-footer">
-          <small>
-            {remainingLabel} {limit - draft.length}
-            {unit}
-          </small>
+          {remainingLabel ? (
+            <small>
+              {remainingLabel} {limit - draft.length}
+              {unit}
+            </small>
+          ) : (
+            <small aria-hidden="true" />
+          )}
           <div>
             <button onClick={onCancel} type="button">
               {cancelLabel}

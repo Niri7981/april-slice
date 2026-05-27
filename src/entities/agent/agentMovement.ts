@@ -1,13 +1,14 @@
-import type { Body, Vector } from "./body";
+import type { Body, Vector } from "../core/body";
 import {
   findWorldPath,
   getNearestWorldNodeId,
   type WorldNodeId,
   worldNodes,
-} from "../world/worldGraph";
+} from "../../world/data/worldGraph";
 
 export type AgentBody = Body & {
   currentTargetNodeId: WorldNodeId;
+  facing: Vector;
   path: WorldNodeId[];
   pathIndex: number;
 };
@@ -23,6 +24,7 @@ export const createScheduledAgentBody = (): AgentBody => ({
   y: worldNodes.room.y,
   radius: 28,
   currentTargetNodeId: "room",
+  facing: { x: 0, y: 1 },
   path: ["room"],
   pathIndex: 0,
 });
@@ -45,7 +47,11 @@ export const assignAgentTarget = (
   };
 };
 
-export const moveAgentAlongPath = (agent: AgentBody, dt: number): AgentBody => {
+export const moveAgentAlongPath = (
+  agent: AgentBody,
+  dt: number,
+  speedMultiplier = 1,
+): AgentBody => {
   const nextNodeId = agent.path[agent.pathIndex + 1] ?? agent.path[agent.pathIndex];
   const nextNode = worldNodes[nextNodeId];
 
@@ -64,10 +70,14 @@ export const moveAgentAlongPath = (agent: AgentBody, dt: number): AgentBody => {
     };
   }
 
-  const step = Math.min(distance, agentSpeed * dt);
+  const step = Math.min(distance, agentSpeed * speedMultiplier * dt);
 
   return {
     ...agent,
+    facing: {
+      x: (nextNode.x - agent.x) / distance,
+      y: (nextNode.y - agent.y) / distance,
+    },
     x: agent.x + ((nextNode.x - agent.x) / distance) * step,
     y: agent.y + ((nextNode.y - agent.y) / distance) * step,
   };

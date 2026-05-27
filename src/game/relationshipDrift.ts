@@ -61,8 +61,9 @@ const pushChange = (
 
 const findRelationship = (
   relationships: RelationshipState[],
-  role: string,
-): RelationshipState | undefined => relationships.find((relationship) => relationship.role === role);
+  roleKey: NonNullable<RelationshipState["roleKey"]>,
+): RelationshipState | undefined =>
+  relationships.find((relationship) => relationship.roleKey === roleKey);
 
 export const resolveLocalRelationshipDrift = (
   input: AgentBrainInput,
@@ -70,12 +71,9 @@ export const resolveLocalRelationshipDrift = (
 ): RelationshipDriftResult => {
   const changes: RelationshipStateChange[] = [];
   const reasons: RelationshipDriftReasonCode[] = [];
-  const classmate = findRelationship(input.relationships, "同桌") ??
-    findRelationship(input.relationships, "Classmate");
-  const family = findRelationship(input.relationships, "家人") ??
-    findRelationship(input.relationships, "Family");
-  const guide = findRelationship(input.relationships, "引路人") ??
-    findRelationship(input.relationships, "Guide");
+  const classmate = findRelationship(input.relationships, "classmate");
+  const family = findRelationship(input.relationships, "family");
+  const guide = findRelationship(input.relationships, "guide");
 
   if (input.event.kind === "note") {
     if ((input.dayContext.scene === "classroom" || input.dayContext.scene === "corridor") && classmate) {
@@ -83,7 +81,7 @@ export const resolveLocalRelationshipDrift = (
       reasons.push("note_school_classmate");
     }
 
-    if (input.dayContext.scene === "homeRoom" && family) {
+    if ((input.dayContext.scene === "homeRoom" || input.dayContext.scene === "room") && family) {
       pushChange(changes, family.id, 1, 0, "note_home_family");
       reasons.push("note_home_family");
     }

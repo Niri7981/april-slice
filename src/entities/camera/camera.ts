@@ -1,5 +1,5 @@
-import type { Body, Vector } from "./body";
-import type { Size } from "../world/worldConfig";
+import type { Body, Vector } from "../core/body";
+import type { Size } from "../../world/data/worldConfig";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));

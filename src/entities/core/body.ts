@@ -8,8 +8,8 @@ export type Body = Vector & {
 };
 
 export const createPlayerBody = (): Body => ({
-  x: 460,
-  y: 620,
+  x: 430,
+  y: 390,
   radius: 28,
 });
 

@@ -1,4 +1,4 @@
-import type { Vector } from "../entities/body";
+import type { Vector } from "../../entities/core/body";
 
 export type WorldNodeId =
   | "room"

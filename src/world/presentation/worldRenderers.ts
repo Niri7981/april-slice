@@ -1,6 +1,6 @@
 import type { Graphics } from "pixi.js";
-import { worldSize } from "./worldConfig";
-import { worldEdges, worldNodes, type WorldNode, type WorldNodeId } from "./worldGraph";
+import { worldSize } from "../data/worldConfig";
+import { worldEdges, worldNodes, type WorldNode, type WorldNodeId } from "../data/worldGraph";
 
 const drawWorldGraph = (graphics: Graphics) => {
   const drawnEdges = new Set<string>();
@@ -79,6 +79,13 @@ export const drawAgent = (graphics: Graphics) => {
   graphics.stroke({ color: 0x2d2a24, width: 5 });
 };
 
+export const drawAgentFacingMarker = (graphics: Graphics) => {
+  graphics.clear();
+  graphics.poly([34, 0, 15, -10, 15, 10]);
+  graphics.fill(0xf2dfaf);
+  graphics.stroke({ color: 0x2d2a24, width: 4 });
+};
+
 export const drawPlayer = (graphics: Graphics) => {
   graphics.clear();
   graphics.circle(0, 0, 28);
@@ -86,4 +93,25 @@ export const drawPlayer = (graphics: Graphics) => {
   graphics.circle(0, -18, 19);
   graphics.fill(0x8dae7d);
   graphics.stroke({ color: 0x2d2a24, width: 5 });
+};
+
+export const drawNotePaper = (graphics: Graphics) => {
+  graphics.clear();
+  graphics.rect(-22, -14, 44, 28);
+  graphics.fill(0xf2dfaf);
+  graphics.stroke({ color: 0x2d2a24, width: 4 });
+  graphics.moveTo(-16, -4);
+  graphics.lineTo(16, -4);
+  graphics.moveTo(-16, 6);
+  graphics.lineTo(10, 6);
+  graphics.stroke({ color: 0xa65f3a, width: 3, alpha: 0.75 });
+};
+
+export const drawNpc = (graphics: Graphics) => {
+  graphics.clear();
+  graphics.circle(0, 0, 24);
+  graphics.fill(0x9b6a88);
+  graphics.circle(0, -16, 16);
+  graphics.fill(0xc596aa);
+  graphics.stroke({ color: 0x2d2a24, width: 4 });
 };

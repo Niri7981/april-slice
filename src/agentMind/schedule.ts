@@ -1,4 +1,4 @@
-import type { WorldNodeId } from "../world/worldGraph";
+import type { WorldNodeId } from "../world/data/worldGraph";
 
 export type ScheduleEntry = {
   minute: number;
@@ -49,6 +49,7 @@ export const agentSchedule: ScheduleEntry[] = [
 ];
 
 export const getScheduleEntryForMinute = (minute: number): ScheduleEntry =>
-  agentSchedule.reduce((currentEntry, entry) =>
-    minute >= entry.minute ? entry : currentEntry,
+  agentSchedule.reduce<ScheduleEntry>(
+    (currentEntry, entry) => (minute >= entry.minute ? entry : currentEntry),
+    agentSchedule[0],
   );

@@ -41,6 +41,7 @@ export type AgentBrainInput = {
     id: string;
     name: string;
     role: string;
+    roleKey?: "classmate" | "family" | "guide";
     warmth: number;
     tension: number;
     note: string;
