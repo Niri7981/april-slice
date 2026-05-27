@@ -17,13 +17,17 @@ import { createCamera, getCameraTarget, moveCameraToward } from "../../entities/
 import { getMoveDirection, moveBody } from "../../entities/player/playerMovement";
 import type { AgentSignalState } from "../../game/agentState";
 import { viewportSize, worldSize } from "../data/worldConfig";
-import { worldNodes } from "../data/worldGraph";
+import { getNearestWorldNodeId, worldNodes, type WorldNodeId } from "../data/worldGraph";
 import {
   getDistance,
   isDayComplete,
   isNotePickupTriggered,
 } from "../systems/worldInteractions";
-import { advanceWorldMinute } from "../systems/worldTime";
+import {
+  advanceWorldMinute,
+  getTimeOfDayForMinute,
+  type WorldTimeOfDay,
+} from "../systems/worldTime";
 
 type UseWorldLoopOptions = {
   day: number;
@@ -33,6 +37,7 @@ type UseWorldLoopOptions = {
   echoEffect: EchoBehaviorEffect | null;
   onNotePicked: () => void;
   onDayComplete: () => void;
+  onWorldContextChanged: (scene: WorldNodeId, timeOfDay: WorldTimeOfDay) => void;
 };
 
 export const useWorldLoop = ({
@@ -43,6 +48,7 @@ export const useWorldLoop = ({
   echoEffect,
   onNotePicked,
   onDayComplete,
+  onWorldContextChanged,
 }: UseWorldLoopOptions) => {
   const keys = useRef(new Set<string>());
   const player = useRef<Body>(createPlayerBody());
@@ -57,6 +63,7 @@ export const useWorldLoop = ({
   const dayCompleteFired = useRef(false);
   const schoolPauseRemaining = useRef(0);
   const schoolPauseEffectId = useRef<string | null>(null);
+  const lastContextKey = useRef<string | null>(null);
 
   useEffect(() => {
     keys.current.clear();
@@ -68,6 +75,7 @@ export const useWorldLoop = ({
     dayCompleteFired.current = false;
     schoolPauseRemaining.current = 0;
     schoolPauseEffectId.current = null;
+    lastContextKey.current = null;
   }, [day]);
 
   useEffect(() => {
@@ -101,6 +109,14 @@ export const useWorldLoop = ({
     );
 
     worldMinute.current = advanceWorldMinute(worldMinute.current, dt);
+    const currentScene = getNearestWorldNodeId(nextPlayer);
+    const currentTimeOfDay = getTimeOfDayForMinute(worldMinute.current);
+    const contextKey = `${currentScene}:${currentTimeOfDay}`;
+
+    if (lastContextKey.current !== contextKey) {
+      lastContextKey.current = contextKey;
+      onWorldContextChanged(currentScene, currentTimeOfDay);
+    }
 
     const scheduleEntry = getScheduleEntryForMinute(worldMinute.current);
     const scheduledAgent = assignAgentTarget(agent.current, scheduleEntry.targetNodeId);

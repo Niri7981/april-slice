@@ -47,6 +47,7 @@ export function WorldPrototype() {
             echoEffect={echoEffect}
             onNotePicked={actions.openNotePaper}
             onDayComplete={actions.completeDay}
+            onWorldContextChanged={actions.recordWorldContext}
           />
         </Application>
       </section>

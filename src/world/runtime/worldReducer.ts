@@ -2,9 +2,12 @@ import type { AgentSignalState } from "../../game/agentState";
 import type { DayRecord } from "../../game/dayRecord";
 import type { DailyEchoRecord } from "../../game/echoResolution";
 import type { RelationshipState } from "../../game/relationshipDrift";
+import type { WorldNodeId } from "../data/worldGraph";
+import type { WorldTimeOfDay } from "../systems/worldTime";
 import type { WorldRuntimeState } from "./worldState";
 
 export type WorldRuntimeAction =
+  | { type: "context/changed"; scene: WorldNodeId; timeOfDay: WorldTimeOfDay }
   | { type: "note/open" }
   | { type: "note/cancel" }
   | { type: "note/draftChanged"; draft: string }
@@ -23,6 +26,17 @@ export const worldReducer = (
   action: WorldRuntimeAction,
 ): WorldRuntimeState => {
   switch (action.type) {
+    case "context/changed":
+      return {
+        ...state,
+        context: {
+          scene: action.scene,
+          timeOfDay: action.timeOfDay,
+          visitedScenes: state.context.visitedScenes.includes(action.scene)
+            ? state.context.visitedScenes
+            : [...state.context.visitedScenes, action.scene],
+        },
+      };
     case "note/open":
       return {
         ...state,
@@ -76,6 +90,11 @@ export const worldReducer = (
       return {
         ...state,
         day: state.day + 1,
+        context: {
+          scene: "room",
+          timeOfDay: "morning",
+          visitedScenes: ["room"],
+        },
         dailyEchoes: [],
         echoEffect: null,
         note: {

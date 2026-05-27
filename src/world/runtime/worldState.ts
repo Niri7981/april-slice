@@ -3,6 +3,8 @@ import type { AgentSignalState } from "../../game/agentState";
 import type { DayRecord } from "../../game/dayRecord";
 import type { DailyEchoRecord } from "../../game/echoResolution";
 import type { RelationshipState } from "../../game/relationshipDrift";
+import type { WorldNodeId } from "../data/worldGraph";
+import type { WorldTimeOfDay } from "../systems/worldTime";
 
 export type WorldNoteState = {
   available: boolean;
@@ -15,8 +17,15 @@ export type WorldDiaryState = {
   record: DayRecord | null;
 };
 
+export type WorldContextState = {
+  scene: WorldNodeId;
+  timeOfDay: WorldTimeOfDay;
+  visitedScenes: WorldNodeId[];
+};
+
 export type WorldRuntimeState = {
   day: number;
+  context: WorldContextState;
   note: WorldNoteState;
   diary: WorldDiaryState;
   agentState: AgentSignalState;
@@ -65,6 +74,11 @@ export const initialRelationships: RelationshipState[] = [
 
 export const initialWorldState: WorldRuntimeState = {
   day: 1,
+  context: {
+    scene: "room",
+    timeOfDay: "morning",
+    visitedScenes: ["room"],
+  },
   note: {
     available: true,
     dialogOpen: false,

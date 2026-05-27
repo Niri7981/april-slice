@@ -2,6 +2,8 @@ import { extend } from "@pixi/react";
 import { Container, Graphics, Text } from "pixi.js";
 import type { EchoBehaviorEffect } from "../../agentMind/behaviorEffects";
 import type { AgentSignalState } from "../../game/agentState";
+import type { WorldNodeId } from "../data/worldGraph";
+import type { WorldTimeOfDay } from "../systems/worldTime";
 import {
   AgentSprite,
   NotePaperSprite,
@@ -23,6 +25,7 @@ type WorldStageProps = {
   echoEffect: EchoBehaviorEffect | null;
   onNotePicked: () => void;
   onDayComplete: () => void;
+  onWorldContextChanged: (scene: WorldNodeId, timeOfDay: WorldTimeOfDay) => void;
 };
 
 export const WorldStage = (props: WorldStageProps) => {

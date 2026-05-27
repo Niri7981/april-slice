@@ -2,14 +2,14 @@ import { useReducer, useRef } from "react";
 import { buildDayRecord } from "../../game/dayRecord";
 import { resolveEchoOutcome } from "../../game/echoResolution";
 import { resolveAgentBrainFake } from "../../llm/fakeResolver";
+import type { WorldNodeId } from "../data/worldGraph";
+import type { WorldTimeOfDay } from "../systems/worldTime";
 import { worldReducer } from "./worldReducer";
 import {
   initialAgentState,
   initialRelationships,
   initialWorldState,
 } from "./worldState";
-
-const visitedScenes = ["room", "homeGate", "schoolGate", "classroom", "cafeteria", "station"];
 
 export const useWorldRuntime = () => {
   const [state, dispatch] = useReducer(worldReducer, initialWorldState);
@@ -18,6 +18,10 @@ export const useWorldRuntime = () => {
   const latestDailyEchoes = useRef(state.dailyEchoes);
   const dayStartAgentState = useRef(initialAgentState);
   const dayStartRelationships = useRef(initialRelationships);
+
+  const recordWorldContext = (scene: WorldNodeId, timeOfDay: WorldTimeOfDay) => {
+    dispatch({ type: "context/changed", scene, timeOfDay });
+  };
 
   const openNotePaper = () => {
     dispatch({ type: "note/open" });
@@ -56,9 +60,9 @@ export const useWorldRuntime = () => {
         relationships: latestRelationships.current,
         dayContext: {
           day: state.day,
-          timeOfDay: "morning",
-          scene: "room",
-          visitedScenes: ["room"],
+          timeOfDay: state.context.timeOfDay,
+          scene: state.context.scene,
+          visitedScenes: state.context.visitedScenes,
         },
         echoContext: {
           baseEchoes: 2,
@@ -79,7 +83,7 @@ export const useWorldRuntime = () => {
         event: {
           kind: "note",
           noteText,
-          scene: "room",
+          scene: state.context.scene,
         },
       },
       resolveAgentBrainFake,
@@ -111,7 +115,7 @@ export const useWorldRuntime = () => {
       type: "diary/opened",
       record: buildDayRecord({
         day: state.day,
-        visitedScenes,
+        visitedScenes: state.context.visitedScenes,
         echoes: latestDailyEchoes.current,
         stateStart: dayStartAgentState.current,
         stateEnd: latestAgentState.current,
@@ -134,6 +138,7 @@ export const useWorldRuntime = () => {
       openNotePaper,
       cancelNotePaper,
       changeNoteDraft,
+      recordWorldContext,
       sendNoteEcho,
       completeDay,
       closeDiary,
