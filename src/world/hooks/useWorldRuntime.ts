@@ -4,12 +4,12 @@ import { resolveEchoOutcome } from "../../game/echoResolution";
 import { resolveAgentBrainFake } from "../../llm/fakeResolver";
 import type { WorldNodeId } from "../data/worldGraph";
 import type { WorldTimeOfDay } from "../systems/worldTime";
-import { worldReducer } from "./worldReducer";
+import { worldReducer } from "../runtime/worldReducer";
 import {
   initialAgentState,
   initialRelationships,
   initialWorldState,
-} from "./worldState";
+} from "../runtime/worldState";
 
 export const useWorldRuntime = () => {
   const [state, dispatch] = useReducer(worldReducer, initialWorldState);

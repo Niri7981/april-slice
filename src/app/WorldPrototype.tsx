@@ -3,7 +3,7 @@ import { DiaryView } from "../ui/DiaryView";
 import { NoteEchoDialog } from "../ui/NoteEchoDialog";
 import { viewportSize } from "../world/data/worldConfig";
 import { WorldStage } from "../world/presentation/WorldStage";
-import { useWorldRuntime } from "../world/runtime/useWorldRuntime";
+import { useWorldRuntime } from "../world/hooks/useWorldRuntime";
 
 const noteLimit = 48;
 
