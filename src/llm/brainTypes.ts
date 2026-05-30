@@ -3,7 +3,8 @@ import {
   buildAgentStateShape,
   type AgentSignalState,
   type AgentStateDelta,
-} from "../game/agentState";
+} from "../game/state/agentState";
+import type { InitialHandTag } from "../game/initial-hand/initialHand";
 
 export const agentReactionSchema = z.enum([
   "accepted",
@@ -35,6 +36,7 @@ export type AgentBrainInput = {
   openingHand: {
     summary: string;
     cards: string[];
+    tags: InitialHandTag[];
   };
   currentState: AgentSignalState;
   relationships: Array<{

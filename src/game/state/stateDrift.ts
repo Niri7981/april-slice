@@ -1,4 +1,4 @@
-import type { AgentBrainInput, AgentReaction } from "../llm/brainTypes";
+import type { AgentBrainInput, AgentReaction } from "../../llm/brainTypes";
 import {
   AGENT_STATE_KEYS,
   type AgentSignalState,

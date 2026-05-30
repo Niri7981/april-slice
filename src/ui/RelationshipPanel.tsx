@@ -1,4 +1,4 @@
-import type { RelationshipState } from "../game/relationshipDrift";
+import type { RelationshipState } from "../game/relationships/relationshipDrift";
 
 type RelationshipCopy = {
   id: string;

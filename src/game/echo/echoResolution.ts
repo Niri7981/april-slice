@@ -1,6 +1,6 @@
-import type { AgentBrainInput, AgentBrainOutput } from "../llm/brainTypes";
-import { resolveLocalRelationshipDrift } from "./relationshipDrift";
-import { resolveLocalStateDrift } from "./stateDrift";
+import type { AgentBrainInput, AgentBrainOutput } from "../../llm/brainTypes";
+import { resolveLocalRelationshipDrift } from "../relationships/relationshipDrift";
+import { resolveLocalStateDrift } from "../state/stateDrift";
 
 export type EchoBrainResolver = (input: AgentBrainInput) => AgentBrainOutput;
 

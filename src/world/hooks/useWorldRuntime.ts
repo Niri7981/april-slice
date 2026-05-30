@@ -1,6 +1,6 @@
 import { useReducer, useRef } from "react";
-import { buildDayRecord } from "../../game/dayRecord";
-import { resolveEchoOutcome } from "../../game/echoResolution";
+import { buildDayRecord } from "../../game/day/dayRecord";
+import { resolveEchoOutcome } from "../../game/echo/echoResolution";
 import { resolveAgentBrainFake } from "../../llm/fakeResolver";
 import type { WorldNodeId } from "../data/worldGraph";
 import type { WorldTimeOfDay } from "../systems/worldTime";
@@ -53,8 +53,9 @@ export const useWorldRuntime = () => {
           keywords: ["四月", "海边", "放学路", "迟疑"],
         },
         openingHand: {
-          summary: "她更容易被轻一点、短一点的靠近打动。",
-          cards: ["Page of Cups", "The Moon", "Six of Swords"],
+          summary: state.initialHand.summary,
+          cards: state.initialHand.cards,
+          tags: state.initialHand.tags,
         },
         currentState: latestAgentState.current,
         relationships: latestRelationships.current,

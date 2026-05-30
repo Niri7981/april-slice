@@ -1,4 +1,4 @@
-import type { AgentBrainInput, AgentReaction } from "../llm/brainTypes";
+import type { AgentBrainInput, AgentReaction } from "../../llm/brainTypes";
 
 export type RelationshipState = AgentBrainInput["relationships"][number];
 

@@ -1,8 +1,10 @@
 import type { EchoBehaviorEffect } from "../../agentMind/behaviorEffects";
-import type { AgentSignalState } from "../../game/agentState";
-import type { DayRecord } from "../../game/dayRecord";
-import type { DailyEchoRecord } from "../../game/echoResolution";
-import type { RelationshipState } from "../../game/relationshipDrift";
+import type { DayRecord } from "../../game/day/dayRecord";
+import type { DailyEchoRecord } from "../../game/echo/echoResolution";
+import { createFallbackInitialHand } from "../../game/initial-hand/createInitialHand";
+import type { InitialHand } from "../../game/initial-hand/initialHand";
+import type { RelationshipState } from "../../game/relationships/relationshipDrift";
+import type { AgentSignalState } from "../../game/state/agentState";
 import type { WorldNodeId } from "../data/worldGraph";
 import type { WorldTimeOfDay } from "../systems/worldTime";
 
@@ -25,6 +27,7 @@ export type WorldContextState = {
 
 export type WorldRuntimeState = {
   day: number;
+  initialHand: InitialHand;
   context: WorldContextState;
   note: WorldNoteState;
   diary: WorldDiaryState;
@@ -72,8 +75,14 @@ export const initialRelationships: RelationshipState[] = [
   },
 ];
 
+export const initialHand = createFallbackInitialHand({
+  name: "April",
+  birthDate: "2008-04-17",
+});
+
 export const initialWorldState: WorldRuntimeState = {
   day: 1,
+  initialHand,
   context: {
     scene: "room",
     timeOfDay: "morning",

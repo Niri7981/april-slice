@@ -128,6 +128,40 @@ button,
   image-rendering: pixelated;
 }
 
+.world-clock-view {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  min-width: 116px;
+  gap: 2px;
+  border: 3px solid var(--ink);
+  background: rgba(244, 237, 222, 0.92);
+  box-shadow: 3px 3px 0 var(--paper-shadow), 6px 6px 0 var(--ink);
+  color: var(--ink);
+  padding: 8px 10px;
+  pointer-events: none;
+}
+
+.world-clock-view span {
+  color: var(--rust);
+  font-family:
+    "Fusion Pixel 12px M latin", "Fusion Pixel 12px Monospaced SC",
+    "Courier New", Courier, monospace;
+  font-size: 0.68rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.world-clock-view strong {
+  font-family:
+    "Fusion Pixel 12px M latin", "Fusion Pixel 12px Monospaced SC",
+    "Courier New", Courier, monospace;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;

@@ -45,8 +45,14 @@ const nextCopy = {
 
 const reactionByNote = (input: AgentBrainInput): AgentReaction => {
   const note = input.event.noteText?.trim() ?? "";
+  const misreadBias = input.openingHand.tags.some((tag) =>
+    tag.misreadBias.includes("silence"),
+  );
 
-  if (input.currentState.trust <= 45 && input.currentState.selfSense >= 55) {
+  if (
+    (input.currentState.trust <= 45 && input.currentState.selfSense >= 55) ||
+    (misreadBias && input.currentState.trust <= 50)
+  ) {
     return "misread";
   }
 

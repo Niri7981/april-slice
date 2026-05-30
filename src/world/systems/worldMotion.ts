@@ -12,7 +12,7 @@ import {
 import type { Body, Vector } from "../../entities/core/body";
 import { getCameraTarget, moveCameraToward } from "../../entities/camera/camera";
 import { getMoveDirection, moveBody } from "../../entities/player/playerMovement";
-import type { AgentSignalState } from "../../game/agentState";
+import type { AgentSignalState } from "../../game/state/agentState";
 import { viewportSize, worldSize } from "../data/worldConfig";
 import { worldNodes } from "../data/worldGraph";
 import { getDistance } from "./worldInteractions";

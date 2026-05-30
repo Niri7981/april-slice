@@ -1,11 +1,11 @@
-import type { AgentReaction } from "../llm/brainTypes";
-import type { DailyEchoRecord } from "./echoResolution";
-import type { RelationshipState } from "./relationshipDrift";
+import type { AgentReaction } from "../../llm/brainTypes";
+import type { DailyEchoRecord } from "../echo/echoResolution";
+import type { RelationshipState } from "../relationships/relationshipDrift";
 import {
   diffAgentState,
   type AgentSignalState,
   type AgentStateDelta,
-} from "./stateDrift";
+} from "../state/stateDrift";
 
 export type DayRelationshipDelta = {
   relationshipId: string;

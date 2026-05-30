@@ -1,7 +1,7 @@
-import type { AgentSignalState } from "../../game/agentState";
-import type { DayRecord } from "../../game/dayRecord";
-import type { DailyEchoRecord } from "../../game/echoResolution";
-import type { RelationshipState } from "../../game/relationshipDrift";
+import type { DayRecord } from "../../game/day/dayRecord";
+import type { DailyEchoRecord } from "../../game/echo/echoResolution";
+import type { RelationshipState } from "../../game/relationships/relationshipDrift";
+import type { AgentSignalState } from "../../game/state/agentState";
 import type { WorldNodeId } from "../data/worldGraph";
 import type { WorldTimeOfDay } from "../systems/worldTime";
 import type { WorldRuntimeState } from "./worldState";

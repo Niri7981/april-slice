@@ -1,9 +1,13 @@
 import { Application } from "@pixi/react";
+import { useState } from "react";
+import { dayStartMinute } from "../agentMind/schedule";
 import { DiaryView } from "../ui/DiaryView";
 import { NoteEchoDialog } from "../ui/NoteEchoDialog";
+import { WorldClockView } from "../ui/WorldClockView";
 import { viewportSize } from "../world/data/worldConfig";
 import { WorldStage } from "../world/presentation/WorldStage";
 import { useWorldRuntime } from "../world/hooks/useWorldRuntime";
+import { formatWorldMinute } from "../world/systems/worldTime";
 
 const noteLimit = 48;
 
@@ -15,6 +19,7 @@ const fallbackDiaryParagraphs = [
 export function WorldPrototype() {
   const { state, actions } = useWorldRuntime();
   const { day, note, diary, agentState, echoEffect } = state;
+  const [displayWorldMinute, setDisplayWorldMinute] = useState(dayStartMinute);
 
   const diaryParagraphs =
     diary.record && diary.record.diaryFragments.length > 0
@@ -30,6 +35,10 @@ export function WorldPrototype() {
         April Slice world prototype
       </div>
       <section className="world-prototype-frame" aria-label="April Slice world prototype">
+        <WorldClockView
+          dayLabel={`Day ${day}`}
+          timeLabel={formatWorldMinute(displayWorldMinute)}
+        />
         <Application
           background={0x20251f}
           width={viewportSize.width}
@@ -48,6 +57,7 @@ export function WorldPrototype() {
             onNotePicked={actions.openNotePaper}
             onDayComplete={actions.completeDay}
             onWorldContextChanged={actions.recordWorldContext}
+            onWorldMinuteChanged={setDisplayWorldMinute}
           />
         </Application>
       </section>
