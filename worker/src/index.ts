@@ -1,4 +1,5 @@
 import type { AstrologyChartSeed } from "../../src/game/initial-hand/profileSeed/astrologyChart";
+import type { InitialHandOutputLanguage } from "../../src/game/initial-hand/model/initialHand";
 import { buildInitialHandPrompt } from "../../src/game/initial-hand/prompt/initialHandPrompt";
 
 type Env = {
@@ -86,8 +87,9 @@ export default {
       return json({ error: "request_too_large" }, { status: 413, headers });
     }
 
-    const { chart } = (await request.json()) as {
+    const { chart, outputLanguage = "en" } = (await request.json()) as {
       chart?: AstrologyChartSeed;
+      outputLanguage?: InitialHandOutputLanguage;
     };
 
     if (!chart) {
@@ -109,7 +111,10 @@ export default {
               role: "system",
               content: "Return strict JSON only. No markdown. No commentary.",
             },
-            { role: "user", content: buildInitialHandPrompt({ chart }) },
+            {
+              role: "user",
+              content: buildInitialHandPrompt({ chart, outputLanguage }),
+            },
           ],
           temperature: 0.7,
         }),

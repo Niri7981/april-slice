@@ -33,6 +33,7 @@ export const useWorldRuntime = () => {
         name: "April",
         birthDate: "2008-04-17",
       },
+      outputLanguage: "en",
     })
       .then((initialHand) => {
         dispatch({ type: "initialHand/resolved", initialHand });

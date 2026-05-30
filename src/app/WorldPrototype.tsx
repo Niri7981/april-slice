@@ -2,6 +2,7 @@ import { Application } from "@pixi/react";
 import { useState } from "react";
 import { dayStartMinute } from "../agentMind/schedule";
 import { DiaryView } from "../ui/DiaryView";
+import { InitialHandPanel } from "../ui/InitialHandPanel";
 import { NoteEchoDialog } from "../ui/NoteEchoDialog";
 import { WorldClockView } from "../ui/WorldClockView";
 import { viewportSize } from "../world/data/worldConfig";
@@ -61,6 +62,7 @@ export function WorldPrototype() {
           />
         </Application>
       </section>
+      <InitialHandPanel />
       {note.dialogOpen ? (
         <NoteEchoDialog
           ariaLabel="Note Echo"

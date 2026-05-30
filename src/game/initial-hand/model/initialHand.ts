@@ -9,6 +9,8 @@ export type InitialHandTag = {
   image: string;
 };
 
+export type InitialHandOutputLanguage = "zh" | "en";
+
 export type InitialHand = {
   source:
     | "birth_profile_llm"

@@ -1,7 +1,9 @@
 import type { BirthProfileSeed } from "../profileSeed/birthProfileSeed";
+import type { InitialHandOutputLanguage } from "../model/initialHand";
 
 export type InitialHandPromptInput = {
   chart: BirthProfileSeed;
+  outputLanguage?: InitialHandOutputLanguage;
 };
 
 const formatPlacement = (label: string, placement: BirthProfileSeed["western"]["sun"]) =>
@@ -25,11 +27,21 @@ const formatPillar = (
   return `- ${label}: ${pillar.pillar} / elements ${pillar.elementText} / na yin ${pillar.naYin} / ten-god ${pillar.tenGod}`;
 };
 
-export const buildInitialHandPrompt = ({ chart }: InitialHandPromptInput) => `
+const outputLanguageInstructions: Record<InitialHandOutputLanguage, string> = {
+  en: "Write all human-readable JSON values in natural English. Keep ids in kebab-case English.",
+  zh: "Write all human-readable JSON values in natural Simplified Chinese. Keep ids in kebab-case English.",
+};
+
+export const buildInitialHandPrompt = ({
+  chart,
+  outputLanguage = "en",
+}: InitialHandPromptInput) => `
 You are interpreting a structured birth profile for April Slice, a quiet Japanese seaside youth agent experiment game.
 
 Your job is NOT to decide behavior, numbers, plot outcomes, destiny, fortune, compatibility, or life advice.
 Your job is to produce the agent's Initial Hand: 5-7 opening-bias tags that shape tone, misreading, pressure, and relationship interpretation.
+Output language rule:
+- ${outputLanguageInstructions[outputLanguage]}
 
 Birth profile:
 - Name: ${chart.name}
