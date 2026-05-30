@@ -10,7 +10,11 @@ export type InitialHandTag = {
 };
 
 export type InitialHand = {
-  source: "western_astrology_llm" | "western_astrology_fallback";
+  source:
+    | "birth_profile_llm"
+    | "birth_profile_fallback"
+    | "western_astrology_llm"
+    | "western_astrology_fallback";
   summary: string;
   cards: string[];
   tags: InitialHandTag[];
@@ -26,7 +30,12 @@ export const initialHandTagSchema = z.object({
 });
 
 export const initialHandSchema = z.object({
-  source: z.enum(["western_astrology_llm", "western_astrology_fallback"]),
+  source: z.enum([
+    "birth_profile_llm",
+    "birth_profile_fallback",
+    "western_astrology_llm",
+    "western_astrology_fallback",
+  ]),
   summary: z.string().min(24),
   cards: z.array(z.string().min(1)).min(3).max(8),
   tags: z.array(initialHandTagSchema).min(5).max(7),

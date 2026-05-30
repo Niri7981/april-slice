@@ -1,5 +1,5 @@
-import type { AstrologyChartSeed } from "../../src/game/initial-hand/astrologyChart";
-import { buildInitialHandPrompt } from "../../src/game/initial-hand/initialHandPrompt";
+import type { AstrologyChartSeed } from "../../src/game/initial-hand/profileSeed/astrologyChart";
+import { buildInitialHandPrompt } from "../../src/game/initial-hand/prompt/initialHandPrompt";
 
 type Env = {
   NEWAPI_API_KEY: string;

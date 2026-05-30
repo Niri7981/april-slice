@@ -1,10 +1,10 @@
-import type { InitialHand } from "./initialHand";
-import { initialHandSchema } from "./initialHand";
-import type { AstrologyChartSeed } from "./astrologyChart";
-import { buildInitialHandPrompt } from "./initialHandPrompt";
+import type { InitialHand } from "../model/initialHand";
+import { initialHandSchema } from "../model/initialHand";
+import type { BirthProfileSeed } from "../profileSeed/birthProfileSeed";
+import { buildInitialHandPrompt } from "../prompt/initialHandPrompt";
 
 export type InitialHandInterpreter = (input: {
-  chart: AstrologyChartSeed;
+  chart: BirthProfileSeed;
   prompt: string;
 }) => InitialHand | Promise<InitialHand>;
 
@@ -12,7 +12,7 @@ export const resolveInitialHandFromAstrology = async ({
   chart,
   interpret,
 }: {
-  chart: AstrologyChartSeed;
+  chart: BirthProfileSeed;
   interpret: InitialHandInterpreter;
 }): Promise<InitialHand> => {
   const output = await interpret({

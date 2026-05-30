@@ -2,7 +2,8 @@
 
 The frontend must not hold model API keys.
 
-Initial Hand generation goes through a Cloudflare Worker:
+Initial Hand generation goes through a Cloudflare Worker. The frontend sends a
+structured birth profile seed, not raw API credentials:
 
 ```text
 frontend

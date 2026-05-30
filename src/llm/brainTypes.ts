@@ -4,7 +4,7 @@ import {
   type AgentSignalState,
   type AgentStateDelta,
 } from "../game/state/agentState";
-import type { InitialHandTag } from "../game/initial-hand/initialHand";
+import type { InitialHandTag } from "../game/initial-hand/model/initialHand";
 
 export const agentReactionSchema = z.enum([
   "accepted",

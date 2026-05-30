@@ -1,5 +1,5 @@
-import type { InitialHand, InitialHandTag } from "./initialHand";
-import type { AstrologyChartSeed } from "./astrologyChart";
+import type { InitialHand, InitialHandTag } from "../model/initialHand";
+import type { AstrologyChartSeed } from "../profileSeed/astrologyChart";
 
 const tag = (
   id: string,
@@ -22,12 +22,13 @@ export const fallbackInitialHandInterpreter = ({
 }: {
   chart: AstrologyChartSeed;
 }): InitialHand => ({
-  source: "western_astrology_fallback",
-  summary: `FALLBACK ONLY: ${chart.name}'s Initial Hand is a placeholder generated from a simplified western astrology seed: ${chart.sunSignLabel} sun, ${chart.element} element, ${chart.modality} modality. Replace this with the LLM interpreter before judging personality quality.`,
+  source: "birth_profile_fallback",
+  summary: `FALLBACK ONLY: ${chart.name}'s Initial Hand is a placeholder generated from a structured birth profile seed: ${chart.western.sun.signLabel} sun, ${chart.western.moon.signLabel} moon, ${chart.eastern.dayPillar.pillar} day pillar, and ${chart.eastern.fiveElementLeanings.join("/")} leaning. Replace this with the LLM interpreter before judging personality quality.`,
   cards: [
-    `fallback:${chart.sunSignLabel} Sun`,
-    `fallback:${chart.element} element`,
-    `fallback:${chart.modality} modality`,
+    `fallback:${chart.western.sun.signLabel} Sun`,
+    `fallback:${chart.western.moon.signLabel} Moon`,
+    `fallback:${chart.eastern.dayPillar.pillar} day pillar`,
+    `fallback:${chart.eastern.fiveElementLeanings.join("/")} leaning`,
   ],
   tags: [
     tag(

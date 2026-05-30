@@ -1,8 +1,8 @@
 import type { EchoBehaviorEffect } from "../../agentMind/behaviorEffects";
 import type { DayRecord } from "../../game/day/dayRecord";
 import type { DailyEchoRecord } from "../../game/echo/echoResolution";
-import { createFallbackInitialHand } from "../../game/initial-hand/createInitialHand";
-import type { InitialHand } from "../../game/initial-hand/initialHand";
+import { createFallbackInitialHand } from "../../game/initial-hand/resolver/createInitialHand";
+import type { InitialHand } from "../../game/initial-hand/model/initialHand";
 import type { RelationshipState } from "../../game/relationships/relationshipDrift";
 import type { AgentSignalState } from "../../game/state/agentState";
 import type { WorldNodeId } from "../data/worldGraph";

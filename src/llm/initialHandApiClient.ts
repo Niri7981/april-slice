@@ -1,16 +1,16 @@
 import {
-  buildAstrologyChartSeed,
-  type AstrologyChartInput,
-} from "../game/initial-hand/astrologyChart";
-import type { InitialHand } from "../game/initial-hand/initialHand";
-import { initialHandSchema } from "../game/initial-hand/initialHand";
+  buildBirthProfileSeed,
+  type BirthProfileInput,
+} from "../game/initial-hand/profileSeed/birthProfileSeed";
+import type { InitialHand } from "../game/initial-hand/model/initialHand";
+import { initialHandSchema } from "../game/initial-hand/model/initialHand";
 
 export const requestInitialHand = async ({
   apiUrl,
   input,
 }: {
   apiUrl: string;
-  input: AstrologyChartInput;
+  input: BirthProfileInput;
 }): Promise<InitialHand> => {
   const response = await fetch(apiUrl, {
     method: "POST",
@@ -18,7 +18,7 @@ export const requestInitialHand = async ({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      chart: buildAstrologyChartSeed(input),
+      chart: buildBirthProfileSeed(input),
     }),
   });
 
