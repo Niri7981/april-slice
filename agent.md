@@ -653,6 +653,120 @@ docs
   Product notes, prompt notes, and world references.
 ```
 
+## Code Style And Layering Rules
+
+This section is a hard contract for any contributor, human or AI. Violations are not matters of taste. They are architecture bugs. Read this before writing or accepting any patch.
+
+### Why this section exists
+
+April Slice is a layered system. The product depends on each layer staying inside its own job. When layers leak into each other, the codebase turns into one expanding file that nobody can reason about. A few sloppy weeks here are expensive to undo later.
+
+These rules are not about elegance. They exist so the project can swap the LLM, move from 2D to 3D, or rewrite the UI without rewriting the game.
+
+### The four layers
+
+```
+Presentation:   PixiJS canvas + minimal React shell
+World Layer:    tick / entities / camera / pathfinding / scheduler / agentMind
+Rules Layer:    runState / stateDrift / relationshipDrift / echoResolution / dayRecord
+LLM Layer:      brainTypes / fakeResolver / promptBuilder / toneFilter
+```
+
+**Strict direction of dependency:**
+
+```
+Presentation  →  World  →  Rules  →  LLM types
+             (never the other way)
+```
+
+Upper layers may import lower layers. Lower layers must NOT import upper layers. If a lower layer needs to react to something, it returns data; the upper layer reads it.
+
+### Folder ownership (do not violate)
+
+| Folder | Owns | Must NOT contain |
+|---|---|---|
+| `src/app/` | React shell, `<Application>`, top-level layout | Game logic, agent decisions, state math, LLM calls |
+| `src/world/` | Map graph, pathfinding, world config, world rendering, tick orchestration | React components beyond the canvas stage, business rules, state mutation logic, LLM calls |
+| `src/entities/` | Pure data + pure functions on bodies (player / agent / NPC) | React, PixiJS imports beyond type, game-rule decisions |
+| `src/agentMind/` | Agent intent: `(perception + state + schedule) → intent` | React, rendering, direct state mutation, LLM calls |
+| `src/game/` | Run state schema, state drift rules, relationship rules, echo resolution, day record | React, PixiJS, LLM calls, world rendering |
+| `src/llm/` | Prompt builders, resolver interfaces, response schemas, tone filters | React, world rendering, direct state mutation |
+| `src/ui/` | React panels floating over the world (diary, note paper, day summary) | World tick, agent decisions, state math, direct LLM calls |
+| `src/main.tsx` | App root only | Anything else |
+
+### Mandatory rules
+
+**R1. One file, one responsibility.**
+A file does one of: define types / define pure functions / render one component / orchestrate one tick. Doing two means split it.
+
+**R2. Pure first, side effects last.**
+Game logic (drift, resolution, pathfinding, intent) must be pure: `(input) → output`. No global state, no React hooks, no `Date.now()`, no `Math.random()` inside. If randomness or time is needed, pass it in as a parameter.
+
+**R3. State lives in one place per kind.**
+- World-tick state (positions, camera, world minute): refs in the canvas stage.
+- Run state (agent signal state, relationships, day records): the run state schema.
+- UI ephemeral state (is a modal open): React `useState` in the component that owns the modal.
+
+Do NOT duplicate the same fact across layers. If a value lives in run state, the UI reads it; the UI does not maintain a shadow copy.
+
+**R4. No HUD numbers. Ever.**
+State values are private to the rules layer. UI may render their downstream consequences (a curtain is open, the agent walks slower, a note paper has a fold) but never the raw number. Any `<span>{state.trust}</span>` is a bug.
+
+**R5. The LLM never decides numbers.**
+The LLM may produce diary text, outward behavior description, internal thought, and a reaction tag from a fixed enum. It must never set state values, relationship values, or day flags directly. Those are computed by `stateDrift` and `relationshipDrift` from the reaction tag plus context.
+
+**R6. The world tick never re-renders React.**
+At 60 fps, only PixiJS transforms move. React state changes only fire on semantic events: an echo lands, a day ends, a UI panel opens, or a setup form submits.
+
+**R7. No god files.**
+Soft cap 300 lines per file. At 500 lines it must be split. The previous `App.tsx` reached 2660 lines and had to be deleted whole. Do not let it happen again.
+
+**R8. No inline business constants.**
+Magic numbers (speeds, thresholds, durations, minute marks) live in a named constant at the top of the file or in a config module. `if (state.pressure > 72)` is wrong. `if (state.pressure > pressureLockThreshold)` is right.
+
+**R9. Types are the contract.**
+If two layers exchange data, the shape must be a named exported type, not an inline object literal. Adding a field to `AgentBrainInput` should be a single line change.
+
+**R10. Naming is part of the layer.**
+- Files in `game/` use rule names: `stateDrift`, `relationshipDrift`, `echoResolution`.
+- Files in `entities/` use body names: `body`, `playerMovement`, `agentMovement`.
+- Files in `world/` use spatial names: `worldGraph`, `worldRenderers`, `WorldStage`.
+- Files in `ui/` are React panels: `DiaryView`, `NoteEchoDialog`.
+- React component files use `PascalCase.tsx`. Pure modules use `camelCase.ts`.
+
+**R11. No catch-all `types.ts` in a folder.**
+A growing shared `types.ts` is the seed of a god file. Types live next to the module that owns them. Cross-layer types live in the layer that defines the contract (usually the lower layer).
+
+**R12. Imports declare direction.**
+Imports from upper layers into lower layers are forbidden. Specifically:
+- `game/` files do not import from `world/`, `app/`, `ui/`, or `agentMind/`.
+- `llm/` files do not import from `game/`, `world/`, `app/`, `ui/`, or `agentMind/`, except shared type names exported from `game/agentState`.
+- `entities/` files do not import from `agentMind/`, `app/`, or `ui/`.
+- `ui/` files do not import from `world/` internals (only run state and game types).
+
+**R13. Refactor before adding.**
+If the new feature would force you to violate any rule above, the codebase needs a refactor first. Do not add the feature dirty and "clean it up later". Later does not come.
+
+**R14. Delete on sight.**
+Unused exports, dead branches, commented-out code, files not imported anywhere — delete in the same commit as the change that obsoleted them. Type-check after every cleanup.
+
+### Code review checklist (apply before merging any change)
+
+1. Does any new file exceed 300 lines? If yes, split.
+2. Did any rule layer pull in a React or PixiJS import? If yes, reject.
+3. Did the LLM layer set any state value directly? If yes, reject.
+4. Is any raw state number rendered in the UI? If yes, reject.
+5. Did the world tick add a new React `setState` in the hot path? If yes, reject.
+6. Are there magic numbers without named constants? If yes, name them.
+7. Are there any imports going from a lower layer into an upper layer? If yes, reject.
+8. Was a deleted feature's leftover code (types, assets, dead branches) cleaned up? If no, clean it.
+
+### Refactor reflex
+
+If you ever feel "I'll just put this here for now, it's only one place" — stop. That sentence produced the 2660-line `App.tsx`. The rule is:
+
+> If the right home for this code does not exist yet, create the right home first, then write the code there.
+
 ## First Build Milestones
 
 1. Clean dead types and unify gameplay truth.
