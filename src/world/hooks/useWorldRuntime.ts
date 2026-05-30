@@ -1,6 +1,7 @@
-import { useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { buildDayRecord } from "../../game/day/dayRecord";
 import { resolveEchoOutcome } from "../../game/echo/echoResolution";
+import { requestInitialHand } from "../../llm/initialHandApiClient";
 import { resolveAgentBrainFake } from "../../llm/fakeResolver";
 import type { WorldNodeId } from "../data/worldGraph";
 import type { WorldTimeOfDay } from "../systems/worldTime";
@@ -18,6 +19,28 @@ export const useWorldRuntime = () => {
   const latestDailyEchoes = useRef(state.dailyEchoes);
   const dayStartAgentState = useRef(initialAgentState);
   const dayStartRelationships = useRef(initialRelationships);
+
+  useEffect(() => {
+    const initialHandApiUrl = import.meta.env.VITE_INITIAL_HAND_API_URL;
+
+    if (!initialHandApiUrl) {
+      return;
+    }
+
+    void requestInitialHand({
+      apiUrl: initialHandApiUrl,
+      input: {
+        name: "April",
+        birthDate: "2008-04-17",
+      },
+    })
+      .then((initialHand) => {
+        dispatch({ type: "initialHand/resolved", initialHand });
+      })
+      .catch(() => {
+        // Keep the explicit FALLBACK Initial Hand. The day flow should not break.
+      });
+  }, []);
 
   const recordWorldContext = (scene: WorldNodeId, timeOfDay: WorldTimeOfDay) => {
     dispatch({ type: "context/changed", scene, timeOfDay });

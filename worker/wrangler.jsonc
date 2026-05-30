@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "april-slice-llm",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-30",
+  "vars": {
+    "NEWAPI_BASE_URL": "https://beefapi.com",
+    "NEWAPI_MODEL": "gpt-5.4"
+  }
+}

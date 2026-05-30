@@ -727,27 +727,30 @@ Magic numbers (speeds, thresholds, durations, minute marks) live in a named cons
 **R9. Types are the contract.**
 If two layers exchange data, the shape must be a named exported type, not an inline object literal. Adding a field to `AgentBrainInput` should be a single line change.
 
-**R10. Naming is part of the layer.**
+**R10. Prompt and context rules have one source of truth.**
+Prompts, context-control rules, tone rules, output schemas, and model-facing constraints must be defined once and reused. Do not copy a prompt into a Worker, resolver, test helper, or UI file when a prompt builder already exists. A Worker may call `buildInitialHandPrompt({ chart })`; it must not rewrite its own Initial Hand prompt. Duplicated prompt text is a bug because it creates local/remote behavior drift.
+
+**R11. Naming is part of the layer.**
 - Files in `game/` use rule names: `stateDrift`, `relationshipDrift`, `echoResolution`.
 - Files in `entities/` use body names: `body`, `playerMovement`, `agentMovement`.
 - Files in `world/` use spatial names: `worldGraph`, `worldRenderers`, `WorldStage`.
 - Files in `ui/` are React panels: `DiaryView`, `NoteEchoDialog`.
 - React component files use `PascalCase.tsx`. Pure modules use `camelCase.ts`.
 
-**R11. No catch-all `types.ts` in a folder.**
+**R12. No catch-all `types.ts` in a folder.**
 A growing shared `types.ts` is the seed of a god file. Types live next to the module that owns them. Cross-layer types live in the layer that defines the contract (usually the lower layer).
 
-**R12. Imports declare direction.**
+**R13. Imports declare direction.**
 Imports from upper layers into lower layers are forbidden. Specifically:
 - `game/` files do not import from `world/`, `app/`, `ui/`, or `agentMind/`.
 - `llm/` files do not import from `game/`, `world/`, `app/`, `ui/`, or `agentMind/`, except shared type names exported from `game/agentState`.
 - `entities/` files do not import from `agentMind/`, `app/`, or `ui/`.
 - `ui/` files do not import from `world/` internals (only run state and game types).
 
-**R13. Refactor before adding.**
+**R14. Refactor before adding.**
 If the new feature would force you to violate any rule above, the codebase needs a refactor first. Do not add the feature dirty and "clean it up later". Later does not come.
 
-**R14. Delete on sight.**
+**R15. Delete on sight.**
 Unused exports, dead branches, commented-out code, files not imported anywhere â€” delete in the same commit as the change that obsoleted them. Type-check after every cleanup.
 
 ### Code review checklist (apply before merging any change)
@@ -759,7 +762,8 @@ Unused exports, dead branches, commented-out code, files not imported anywhere â
 5. Did the world tick add a new React `setState` in the hot path? If yes, reject.
 6. Are there magic numbers without named constants? If yes, name them.
 7. Are there any imports going from a lower layer into an upper layer? If yes, reject.
-8. Was a deleted feature's leftover code (types, assets, dead branches) cleaned up? If no, clean it.
+8. Is any prompt, context rule, tone rule, or schema copied instead of imported from its owner? If yes, reject.
+9. Was a deleted feature's leftover code (types, assets, dead branches) cleaned up? If no, clean it.
 
 ### Refactor reflex
 

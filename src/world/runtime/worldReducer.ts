@@ -1,5 +1,6 @@
 import type { DayRecord } from "../../game/day/dayRecord";
 import type { DailyEchoRecord } from "../../game/echo/echoResolution";
+import type { InitialHand } from "../../game/initial-hand/initialHand";
 import type { RelationshipState } from "../../game/relationships/relationshipDrift";
 import type { AgentSignalState } from "../../game/state/agentState";
 import type { WorldNodeId } from "../data/worldGraph";
@@ -7,6 +8,7 @@ import type { WorldTimeOfDay } from "../systems/worldTime";
 import type { WorldRuntimeState } from "./worldState";
 
 export type WorldRuntimeAction =
+  | { type: "initialHand/resolved"; initialHand: InitialHand }
   | { type: "context/changed"; scene: WorldNodeId; timeOfDay: WorldTimeOfDay }
   | { type: "note/open" }
   | { type: "note/cancel" }
@@ -26,6 +28,11 @@ export const worldReducer = (
   action: WorldRuntimeAction,
 ): WorldRuntimeState => {
   switch (action.type) {
+    case "initialHand/resolved":
+      return {
+        ...state,
+        initialHand: action.initialHand,
+      };
     case "context/changed":
       return {
         ...state,
