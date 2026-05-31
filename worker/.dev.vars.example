@@ -1,0 +1,3 @@
+NEWAPI_API_KEY=replace-with-your-api-key
+NEWAPI_BASE_URL=https://beefapi.com
+NEWAPI_MODEL=gpt-5.4

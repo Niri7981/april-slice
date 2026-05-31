@@ -63,6 +63,9 @@ const extractJsonObject = (text: string) => {
   return JSON.parse(trimmed.slice(start, end + 1));
 };
 
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const headers = corsHeaders(env);
@@ -87,53 +90,76 @@ export default {
       return json({ error: "request_too_large" }, { status: 413, headers });
     }
 
-    const { chart, outputLanguage = "en" } = (await request.json()) as {
-      chart?: AstrologyChartSeed;
-      outputLanguage?: InitialHandOutputLanguage;
-    };
+    try {
+      const { chart, outputLanguage = "en" } = (await request.json()) as {
+        chart?: AstrologyChartSeed;
+        outputLanguage?: InitialHandOutputLanguage;
+      };
 
-    if (!chart) {
-      return json({ error: "missing_chart" }, { status: 400, headers });
-    }
+      if (!chart) {
+        return json({ error: "missing_chart" }, { status: 400, headers });
+      }
 
-    const apiResponse = await fetch(
-      `${env.NEWAPI_BASE_URL ?? "https://beefapi.com"}/v1/chat/completions`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.NEWAPI_API_KEY}`,
-          "Content-Type": "application/json",
+      const prompt = buildInitialHandPrompt({ chart, outputLanguage });
+      const apiResponse = await fetch(
+        `${env.NEWAPI_BASE_URL ?? "https://beefapi.com"}/v1/chat/completions`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.NEWAPI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: env.NEWAPI_MODEL ?? "gpt-5.4",
+            messages: [
+              {
+                role: "system",
+                content: "Return strict JSON only. No markdown. No commentary.",
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            temperature: 0.7,
+          }),
         },
-        body: JSON.stringify({
-          model: env.NEWAPI_MODEL ?? "gpt-5.4",
-          messages: [
-            {
-              role: "system",
-              content: "Return strict JSON only. No markdown. No commentary.",
-            },
-            {
-              role: "user",
-              content: buildInitialHandPrompt({ chart, outputLanguage }),
-            },
-          ],
-          temperature: 0.7,
-        }),
-      },
-    );
+      );
 
-    if (!apiResponse.ok) {
-      return json({ error: "model_request_failed" }, { status: 502, headers });
+      if (!apiResponse.ok) {
+        const upstreamText = await apiResponse.text();
+
+        return json(
+          {
+            error: "model_request_failed",
+            status: apiResponse.status,
+            detail: upstreamText.slice(0, 500),
+          },
+          { status: 502, headers },
+        );
+      }
+
+      const apiJson = (await apiResponse.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const content = apiJson.choices?.[0]?.message?.content;
+
+      if (!content) {
+        return json(
+          { error: "missing_model_content", detail: apiJson },
+          { status: 502, headers },
+        );
+      }
+
+      return json(extractJsonObject(content), { headers });
+    } catch (error) {
+      return json(
+        {
+          error: "worker_internal_error",
+          detail: errorMessage(error),
+        },
+        { status: 500, headers },
+      );
     }
-
-    const apiJson = (await apiResponse.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const content = apiJson.choices?.[0]?.message?.content;
-
-    if (!content) {
-      return json({ error: "missing_model_content" }, { status: 502, headers });
-    }
-
-    return json(extractJsonObject(content), { headers });
   },
 };

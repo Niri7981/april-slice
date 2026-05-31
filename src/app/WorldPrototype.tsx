@@ -1,10 +1,12 @@
 import { Application } from "@pixi/react";
 import { useState } from "react";
 import { dayStartMinute } from "../agentMind/schedule";
-import { DiaryView } from "../ui/DiaryView";
-import { InitialHandPanel } from "../ui/InitialHandPanel";
-import { NoteEchoDialog } from "../ui/NoteEchoDialog";
-import { WorldClockView } from "../ui/WorldClockView";
+import {
+  DiaryView,
+  InitialHandPanel,
+  NoteEchoDialog,
+  WorldClockView,
+} from "../ui";
 import { viewportSize } from "../world/data/worldConfig";
 import { WorldStage } from "../world/presentation/WorldStage";
 import { useWorldRuntime } from "../world/hooks/useWorldRuntime";
