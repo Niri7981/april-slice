@@ -5,7 +5,7 @@ import type {
   InitialHandOutputLanguage,
 } from "../../game/initial-hand/model/initialHand";
 import { createFallbackInitialHand } from "../../game/initial-hand/resolver/createInitialHand";
-import { requestInitialHand } from "../../llm/initialHandApiClient";
+import { requestInitialHand } from "../../llm/initial-hand/apiClient";
 import { InitialHandBirthForm } from "./InitialHandBirthForm";
 import { InitialHandResultView } from "./InitialHandResultView";
 import {

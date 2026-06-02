@@ -1,5 +1,5 @@
 import type { AgentSignalState } from "../game/state/agentState";
-import type { AgentReaction } from "../llm/brainTypes";
+import type { AgentReaction } from "../llm/echo/brainTypes";
 
 export type EchoBehaviorEffect = {
   id: string;

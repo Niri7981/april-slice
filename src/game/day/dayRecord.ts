@@ -1,4 +1,4 @@
-import type { AgentReaction } from "../../llm/brainTypes";
+import type { AgentReaction } from "../../llm/echo/brainTypes";
 import type { DailyEchoRecord } from "../echo/echoResolution";
 import type { RelationshipState } from "../relationships/relationshipDrift";
 import {

@@ -1,4 +1,4 @@
-import type { AgentBrainInput, AgentBrainOutput } from "../../llm/brainTypes";
+import type { AgentBrainInput, AgentBrainOutput } from "../../llm/echo/brainTypes";
 import { resolveLocalRelationshipDrift } from "../relationships/relationshipDrift";
 import { resolveLocalStateDrift } from "../state/stateDrift";
 
