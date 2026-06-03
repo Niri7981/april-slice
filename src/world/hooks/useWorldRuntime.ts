@@ -47,6 +47,10 @@ export const useWorldRuntime = () => {
     dispatch({ type: "context/changed", scene, timeOfDay });
   };
 
+  const clearEchoEffect = () => {
+    dispatch({ type: "echo/effectExpired" });
+  };
+
   const completeDay = () => {
     if (state.diary.open) {
       return;
@@ -76,6 +80,7 @@ export const useWorldRuntime = () => {
     actions: {
       ...echo.actions,
       recordWorldContext,
+      clearEchoEffect,
       completeDay,
       closeDiary,
     },

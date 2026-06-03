@@ -27,6 +27,7 @@ type UseWorldLoopOptions = {
   echoEffect: EchoBehaviorEffect | null;
   onNotePicked: () => void;
   onDayComplete: () => void;
+  onEchoEffectExpired: () => void;
   onWorldContextChanged: (scene: WorldNodeId, timeOfDay: WorldTimeOfDay) => void;
   onWorldMinuteChanged: (minute: number) => void;
 };
@@ -39,6 +40,7 @@ export const useWorldLoop = ({
   echoEffect,
   onNotePicked,
   onDayComplete,
+  onEchoEffectExpired,
   onWorldContextChanged,
   onWorldMinuteChanged,
 }: UseWorldLoopOptions) => {
@@ -52,6 +54,9 @@ export const useWorldLoop = ({
   const agentRef = useRef<PixiGraphics | null>(null);
   const facingRef = useRef<PixiGraphics | null>(null);
   const dayCompleteFired = useRef(false);
+  const echoPauseRemaining = useRef(0);
+  const echoEffectRemaining = useRef(0);
+  const activeEchoEffectId = useRef<string | null>(null);
   const schoolPauseRemaining = useRef(0);
   const schoolPauseEffectId = useRef<string | null>(null);
   const lastContextKey = useRef<string | null>(null);
@@ -63,12 +68,32 @@ export const useWorldLoop = ({
     camera.current = createCamera();
     worldMinute.current = dayStartMinute;
     dayCompleteFired.current = false;
+    echoPauseRemaining.current = 0;
+    echoEffectRemaining.current = 0;
+    activeEchoEffectId.current = null;
     schoolPauseRemaining.current = 0;
     schoolPauseEffectId.current = null;
     lastContextKey.current = null;
     lastDisplayMinute.current = dayStartMinute;
     onWorldMinuteChanged(dayStartMinute);
   }, [day, onWorldMinuteChanged]);
+
+  useEffect(() => {
+    if (!echoEffect) {
+      echoPauseRemaining.current = 0;
+      echoEffectRemaining.current = 0;
+      activeEchoEffectId.current = null;
+      return;
+    }
+
+    if (activeEchoEffectId.current === echoEffect.id) {
+      return;
+    }
+
+    activeEchoEffectId.current = echoEffect.id;
+    echoPauseRemaining.current = echoEffect.immediatePauseSeconds;
+    echoEffectRemaining.current = echoEffect.durationSeconds;
+  }, [echoEffect]);
 
   useTick((ticker) => {
     if (paused) {
@@ -98,18 +123,40 @@ export const useWorldLoop = ({
       onWorldContextChanged(worldContext.scene, worldContext.timeOfDay);
     }
 
-    const { nextAgent, nextSchoolPauseRemaining, nextSchoolPauseEffectId } =
-      advanceAgentMotion({
-        agent: agent.current,
-        worldMinute: worldMinute.current,
-        dt,
-        agentState,
-        echoEffect,
-        schoolPauseRemaining: schoolPauseRemaining.current,
-        schoolPauseEffectId: schoolPauseEffectId.current,
-      });
+    const activeEchoEffect =
+      echoEffect &&
+      activeEchoEffectId.current === echoEffect.id &&
+      echoEffectRemaining.current > 0
+        ? echoEffect
+        : null;
+
+    const {
+      nextAgent,
+      nextEchoPauseRemaining,
+      nextSchoolPauseRemaining,
+      nextSchoolPauseEffectId,
+    } = advanceAgentMotion({
+      agent: agent.current,
+      worldMinute: worldMinute.current,
+      dt,
+      agentState,
+      echoEffect: activeEchoEffect,
+      echoPauseRemaining: echoPauseRemaining.current,
+      schoolPauseRemaining: schoolPauseRemaining.current,
+      schoolPauseEffectId: schoolPauseEffectId.current,
+    });
+    echoPauseRemaining.current = nextEchoPauseRemaining;
     schoolPauseRemaining.current = nextSchoolPauseRemaining;
     schoolPauseEffectId.current = nextSchoolPauseEffectId;
+
+    if (activeEchoEffect) {
+      echoEffectRemaining.current = Math.max(0, echoEffectRemaining.current - dt);
+
+      if (echoEffectRemaining.current === 0) {
+        activeEchoEffectId.current = null;
+        onEchoEffectExpired();
+      }
+    }
 
     const eIsDown = keys.current.has("e");
     if (

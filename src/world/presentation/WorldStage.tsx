@@ -25,6 +25,7 @@ type WorldStageProps = {
   echoEffect: EchoBehaviorEffect | null;
   onNotePicked: () => void;
   onDayComplete: () => void;
+  onEchoEffectExpired: () => void;
   onWorldContextChanged: (scene: WorldNodeId, timeOfDay: WorldTimeOfDay) => void;
   onWorldMinuteChanged: (minute: number) => void;
 };

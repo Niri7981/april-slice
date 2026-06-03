@@ -59,6 +59,7 @@ export function WorldPrototype() {
             echoEffect={echoEffect}
             onNotePicked={actions.openNotePaper}
             onDayComplete={actions.completeDay}
+            onEchoEffectExpired={actions.clearEchoEffect}
             onWorldContextChanged={actions.recordWorldContext}
             onWorldMinuteChanged={setDisplayWorldMinute}
           />

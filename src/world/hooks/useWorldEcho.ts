@@ -1,4 +1,5 @@
 import { useRef, type Dispatch } from "react";
+import { createEchoBehaviorEffect } from "../../agentMind/behaviorEffects";
 import { resolveEchoOutcome } from "../../game/echo/echoResolution";
 import { resolveAgentBrainFake } from "../../llm/echo/fakeResolver";
 import { resolveAgentBrainLlm } from "../../llm/echo/llmResolver";
@@ -123,10 +124,11 @@ export const useWorldEcho = ({
         agentState: resolution.stateDrift.nextState,
         relationships: resolution.relationshipDrift.nextRelationships,
         dailyEchoes: nextEchoes,
-        echoEffect: {
+        echoEffect: createEchoBehaviorEffect({
           id: resolution.record.id,
           reaction: resolution.record.reaction,
-        },
+          intendedAction: resolution.brainOutput.behavior.intendedAction,
+        }),
       });
     });
   };

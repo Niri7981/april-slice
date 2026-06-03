@@ -20,6 +20,7 @@ export type WorldRuntimeAction =
       dailyEchoes: DailyEchoRecord[];
       echoEffect: NonNullable<WorldRuntimeState["echoEffect"]>;
     }
+  | { type: "echo/effectExpired" }
   | { type: "diary/opened"; record: DayRecord }
   | { type: "diary/closed" };
 
@@ -85,6 +86,13 @@ export const worldReducer = (
           draft: "",
         },
       };
+    case "echo/effectExpired":
+      return state.echoEffect
+        ? {
+            ...state,
+            echoEffect: null,
+          }
+        : state;
     case "diary/opened":
       return {
         ...state,

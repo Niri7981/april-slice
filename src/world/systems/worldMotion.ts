@@ -17,7 +17,7 @@ import { viewportSize, worldSize } from "../data/worldConfig";
 import { worldNodes } from "../data/worldGraph";
 import { getDistance } from "./worldInteractions";
 
-const schoolGatePauseDuration = 2.6;
+const statePressureGatePauseDuration = 2.6;
 const statePressureEffectId = "state-pressure";
 
 export type PlayerMotionResult = {
@@ -27,6 +27,7 @@ export type PlayerMotionResult = {
 
 export type AgentMotionResult = {
   nextAgent: AgentBody;
+  nextEchoPauseRemaining: number;
   nextSchoolPauseRemaining: number;
   nextSchoolPauseEffectId: string | null;
 };
@@ -58,6 +59,7 @@ export const advanceAgentMotion = ({
   dt,
   agentState,
   echoEffect,
+  echoPauseRemaining,
   schoolPauseRemaining,
   schoolPauseEffectId,
 }: {
@@ -66,6 +68,7 @@ export const advanceAgentMotion = ({
   dt: number;
   agentState: AgentSignalState;
   echoEffect: EchoBehaviorEffect | null;
+  echoPauseRemaining: number;
   schoolPauseRemaining: number;
   schoolPauseEffectId: string | null;
 }): AgentMotionResult => {
@@ -82,12 +85,15 @@ export const advanceAgentMotion = ({
   let nextSchoolPauseEffectId = schoolPauseEffectId;
 
   if (canPauseAtGate) {
-    nextSchoolPauseRemaining = schoolGatePauseDuration;
+    nextSchoolPauseRemaining =
+      echoEffect?.gatePauseSeconds ?? statePressureGatePauseDuration;
     nextSchoolPauseEffectId = activeEffectId;
   }
 
+  const nextEchoPauseRemaining = Math.max(0, echoPauseRemaining - dt);
+
   const nextAgent =
-    nextSchoolPauseRemaining > 0
+    echoPauseRemaining > 0 || nextSchoolPauseRemaining > 0
       ? scheduledAgent
       : moveAgentAlongPath(
           scheduledAgent,
@@ -97,6 +103,7 @@ export const advanceAgentMotion = ({
 
   return {
     nextAgent,
+    nextEchoPauseRemaining,
     nextSchoolPauseRemaining: Math.max(0, nextSchoolPauseRemaining - dt),
     nextSchoolPauseEffectId,
   };
