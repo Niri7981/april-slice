@@ -6,7 +6,7 @@ import type { InitialHand } from "../../game/initial-hand/model/initialHand";
 import type { RelationshipState } from "../../game/relationships/relationshipDrift";
 import type { AgentSignalState } from "../../game/state/agentState";
 import type { WorldNodeId } from "../data/worldGraph";
-import type { WorldTimeOfDay } from "../systems/worldTime";
+import type { WorldTimeOfDay } from "../systems/time/worldTime";
 
 export type WorldNoteState = {
   available: boolean;

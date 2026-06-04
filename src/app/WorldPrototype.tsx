@@ -10,7 +10,7 @@ import {
 import { viewportSize } from "../world/data/worldConfig";
 import { WorldStage } from "../world/presentation/WorldStage";
 import { useWorldRuntime } from "../world/hooks/useWorldRuntime";
-import { formatWorldMinute } from "../world/systems/worldTime";
+import { formatWorldMinute } from "../world/systems/time/worldTime";
 
 const noteLimit = 48;
 

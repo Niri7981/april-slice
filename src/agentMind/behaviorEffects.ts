@@ -7,7 +7,7 @@ export type EchoBehaviorEffect = {
   intendedAction: string;
   durationSeconds: number;
   immediatePauseSeconds: number;
-  gatePauseSeconds: number;
+  anchorPauseSeconds: number;
   speedMultiplier: number;
 };
 
@@ -18,37 +18,37 @@ const reactionBehaviorProfiles: Record<
   accepted: {
     durationSeconds: 4.8,
     immediatePauseSeconds: 0.35,
-    gatePauseSeconds: 1.2,
+    anchorPauseSeconds: 1.2,
     speedMultiplier: 0.92,
   },
   hesitated: {
     durationSeconds: 6.5,
     immediatePauseSeconds: 1.15,
-    gatePauseSeconds: 3.1,
+    anchorPauseSeconds: 3.1,
     speedMultiplier: 0.64,
   },
   resisted: {
     durationSeconds: 5.4,
     immediatePauseSeconds: 0.9,
-    gatePauseSeconds: 2.2,
+    anchorPauseSeconds: 2.2,
     speedMultiplier: 0.74,
   },
   misread: {
     durationSeconds: 6,
     immediatePauseSeconds: 1,
-    gatePauseSeconds: 2.8,
+    anchorPauseSeconds: 2.8,
     speedMultiplier: 0.68,
   },
   delayed: {
     durationSeconds: 5,
     immediatePauseSeconds: 0.55,
-    gatePauseSeconds: 2.4,
+    anchorPauseSeconds: 2.4,
     speedMultiplier: 0.8,
   },
   transformed: {
     durationSeconds: 5.6,
     immediatePauseSeconds: 0.45,
-    gatePauseSeconds: 1.6,
+    anchorPauseSeconds: 1.6,
     speedMultiplier: 0.88,
   },
 };
@@ -82,7 +82,7 @@ export const createEchoBehaviorEffect = ({
       baseProfile.durationSeconds + (suggestsPause || suggestsSlowMovement ? 0.8 : 0),
     immediatePauseSeconds:
       baseProfile.immediatePauseSeconds + (suggestsPause ? 0.35 : 0),
-    gatePauseSeconds: baseProfile.gatePauseSeconds + (suggestsPause ? 0.45 : 0),
+    anchorPauseSeconds: baseProfile.anchorPauseSeconds + (suggestsPause ? 0.45 : 0),
     speedMultiplier: suggestsSlowMovement
       ? Math.min(baseProfile.speedMultiplier, 0.72)
       : baseProfile.speedMultiplier,
@@ -104,8 +104,8 @@ export const getAgentSpeedMultiplier = (
   return effect.speedMultiplier;
 };
 
-export const shouldPauseAtSchoolGate = (
+export const shouldPauseAtAnchorTrigger = (
   state: AgentSignalState,
   effect: EchoBehaviorEffect | null,
 ) =>
-  state.pressure >= 62 || Boolean(effect && effect.gatePauseSeconds > 0);
+  state.pressure >= 62 || Boolean(effect && effect.anchorPauseSeconds > 0);

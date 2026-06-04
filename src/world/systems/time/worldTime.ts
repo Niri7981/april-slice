@@ -1,4 +1,4 @@
-import { dayEndMinute, worldMinutesPerSecond } from "../../agentMind/schedule";
+import { dayEndMinute, worldMinutesPerSecond } from "../../../agentMind/schedule";
 
 export type WorldTimeOfDay = "morning" | "afternoon" | "evening" | "night";
 

@@ -9,14 +9,14 @@ import { createCamera } from "../../entities/camera/camera";
 import type { AgentSignalState } from "../../game/state/agentState";
 import { type WorldNodeId } from "../data/worldGraph";
 import { syncPixiTransforms } from "../presentation/syncPixiTransforms";
-import { getWorldContextSnapshot } from "../systems/worldContext";
-import { isDayComplete, isNotePickupTriggered } from "../systems/worldInteractions";
-import { advanceAgentMotion, advancePlayerMotion } from "../systems/worldMotion";
+import { getWorldContextSnapshot } from "../systems/position/worldContext";
+import { isDayComplete, isNotePickupTriggered } from "../systems/position/worldInteractions";
+import { advanceAgentMotion, advancePlayerMotion } from "../systems/motion/worldMotion";
 import {
   advanceWorldMinute,
   getDisplayWorldMinute,
   type WorldTimeOfDay,
-} from "../systems/worldTime";
+} from "../systems/time/worldTime";
 import { useWorldInput } from "./useWorldInput";
 
 type UseWorldLoopOptions = {
@@ -57,8 +57,8 @@ export const useWorldLoop = ({
   const echoPauseRemaining = useRef(0);
   const echoEffectRemaining = useRef(0);
   const activeEchoEffectId = useRef<string | null>(null);
-  const schoolPauseRemaining = useRef(0);
-  const schoolPauseEffectId = useRef<string | null>(null);
+  const anchorPauseRemaining = useRef(0);
+  const anchorPauseEffectId = useRef<string | null>(null);
   const lastContextKey = useRef<string | null>(null);
   const lastDisplayMinute = useRef<number | null>(null);
 
@@ -71,8 +71,8 @@ export const useWorldLoop = ({
     echoPauseRemaining.current = 0;
     echoEffectRemaining.current = 0;
     activeEchoEffectId.current = null;
-    schoolPauseRemaining.current = 0;
-    schoolPauseEffectId.current = null;
+    anchorPauseRemaining.current = 0;
+    anchorPauseEffectId.current = null;
     lastContextKey.current = null;
     lastDisplayMinute.current = dayStartMinute;
     onWorldMinuteChanged(dayStartMinute);
@@ -133,8 +133,8 @@ export const useWorldLoop = ({
     const {
       nextAgent,
       nextEchoPauseRemaining,
-      nextSchoolPauseRemaining,
-      nextSchoolPauseEffectId,
+      nextAnchorPauseRemaining,
+      nextAnchorPauseEffectId,
     } = advanceAgentMotion({
       agent: agent.current,
       worldMinute: worldMinute.current,
@@ -142,12 +142,12 @@ export const useWorldLoop = ({
       agentState,
       echoEffect: activeEchoEffect,
       echoPauseRemaining: echoPauseRemaining.current,
-      schoolPauseRemaining: schoolPauseRemaining.current,
-      schoolPauseEffectId: schoolPauseEffectId.current,
+      anchorPauseRemaining: anchorPauseRemaining.current,
+      anchorPauseEffectId: anchorPauseEffectId.current,
     });
     echoPauseRemaining.current = nextEchoPauseRemaining;
-    schoolPauseRemaining.current = nextSchoolPauseRemaining;
-    schoolPauseEffectId.current = nextSchoolPauseEffectId;
+    anchorPauseRemaining.current = nextAnchorPauseRemaining;
+    anchorPauseEffectId.current = nextAnchorPauseEffectId;
 
     if (activeEchoEffect) {
       echoEffectRemaining.current = Math.max(0, echoEffectRemaining.current - dt);

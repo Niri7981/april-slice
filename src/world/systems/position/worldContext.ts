@@ -1,6 +1,6 @@
-import type { Vector } from "../../entities/core/body";
-import { getNearestWorldNodeId, type WorldNodeId } from "../data/worldGraph";
-import { getTimeOfDayForMinute, type WorldTimeOfDay } from "./worldTime";
+import type { Vector } from "../../../entities/core/body";
+import { getNearestWorldNodeId, type WorldNodeId } from "../../data/worldGraph";
+import { getTimeOfDayForMinute, type WorldTimeOfDay } from "../time/worldTime";
 
 export type WorldContextSnapshot = {
   scene: WorldNodeId;

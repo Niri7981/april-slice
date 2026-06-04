@@ -2,7 +2,7 @@ import { useEffect, useReducer } from "react";
 import { buildDayRecord } from "../../game/day/dayRecord";
 import { requestInitialHand } from "../../llm/initial-hand/apiClient";
 import type { WorldNodeId } from "../data/worldGraph";
-import type { WorldTimeOfDay } from "../systems/worldTime";
+import type { WorldTimeOfDay } from "../systems/time/worldTime";
 import { useWorldEcho } from "./useWorldEcho";
 import { worldReducer } from "../runtime/worldReducer";
 import {
