@@ -1,6 +1,7 @@
 import { Application } from "@pixi/react";
 import { useState } from "react";
 import { dayStartMinute } from "../agentMind/schedule";
+import { getRendererMode } from "./rendererMode";
 import {
   DiaryView,
   InitialHandPanel,
@@ -11,6 +12,7 @@ import { viewportSize } from "../world/data/worldConfig";
 import { WorldStage } from "../world/presentation/WorldStage";
 import { useWorldRuntime } from "../world/hooks/useWorldRuntime";
 import { formatWorldMinute } from "../world/systems/time/worldTime";
+import { WorldStage3D } from "../world3d/presentation/WorldStage3D";
 
 const noteLimit = 48;
 
@@ -23,6 +25,8 @@ export function WorldPrototype() {
   const { state, actions } = useWorldRuntime();
   const { day, note, diary, agentState, echoEffect } = state;
   const [displayWorldMinute, setDisplayWorldMinute] = useState(dayStartMinute);
+  const rendererMode = getRendererMode();
+  const isThreeRenderer = rendererMode === "three";
 
   const diaryParagraphs =
     diary.record && diary.record.diaryFragments.length > 0
@@ -33,25 +37,27 @@ export function WorldPrototype() {
     "纸页没有留下新的折痕。";
 
   return (
-    <main className="world-prototype-shell">
-      <div className="world-prototype-label" aria-hidden="true">
-        April Slice world prototype
+    <main
+      className={`world-prototype-shell${isThreeRenderer ? " is-three-renderer" : ""}`}
+    >
+      <div
+        className={`world-prototype-label${isThreeRenderer ? " is-three-renderer" : ""}`}
+        aria-hidden="true"
+      >
+        {isThreeRenderer
+          ? "April Slice world prototype / three preview"
+          : "April Slice world prototype"}
       </div>
-      <section className="world-prototype-frame" aria-label="April Slice world prototype">
+      <section
+        className={`world-prototype-frame${isThreeRenderer ? " is-three-renderer" : ""}`}
+        aria-label="April Slice world prototype"
+      >
         <WorldClockView
           dayLabel={`Day ${day}`}
           timeLabel={formatWorldMinute(displayWorldMinute)}
         />
-        <Application
-          background={0x20251f}
-          width={viewportSize.width}
-          height={viewportSize.height}
-          antialias={false}
-          autoDensity
-          resolution={window.devicePixelRatio || 1}
-          className="world-prototype-canvas"
-        >
-          <WorldStage
+        {isThreeRenderer ? (
+          <WorldStage3D
             day={day}
             paused={note.dialogOpen || diary.open}
             noteAvailable={note.available}
@@ -63,9 +69,32 @@ export function WorldPrototype() {
             onWorldContextChanged={actions.recordWorldContext}
             onWorldMinuteChanged={setDisplayWorldMinute}
           />
-        </Application>
+        ) : (
+          <Application
+            background={0x20251f}
+            width={viewportSize.width}
+            height={viewportSize.height}
+            antialias={false}
+            autoDensity
+            resolution={window.devicePixelRatio || 1}
+            className="world-prototype-canvas"
+          >
+            <WorldStage
+              day={day}
+              paused={note.dialogOpen || diary.open}
+              noteAvailable={note.available}
+              agentState={agentState}
+              echoEffect={echoEffect}
+              onNotePicked={actions.openNotePaper}
+              onDayComplete={actions.completeDay}
+              onEchoEffectExpired={actions.clearEchoEffect}
+              onWorldContextChanged={actions.recordWorldContext}
+              onWorldMinuteChanged={setDisplayWorldMinute}
+            />
+          </Application>
+        )}
       </section>
-      <InitialHandPanel />
+      <InitialHandPanel variant={isThreeRenderer ? "overlay" : "default"} />
       {note.dialogOpen ? (
         <NoteEchoDialog
           ariaLabel="Note Echo"

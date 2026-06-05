@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { useState } from "react";
 import type {
   InitialHand,
@@ -18,17 +18,25 @@ import { copyByLanguage } from "./panel-copy";
 
 type InitialHandResults = Partial<Record<InitialHandOutputLanguage, InitialHand>>;
 
-export function InitialHandPanel() {
+type InitialHandPanelProps = {
+  variant?: "default" | "overlay";
+};
+
+export function InitialHandPanel({
+  variant = "default",
+}: InitialHandPanelProps) {
   const [form, setForm] = useState(defaultFormState);
   const [displayLanguage, setDisplayLanguage] =
     useState<InitialHandOutputLanguage>("zh");
   const [initialHands, setInitialHands] = useState<InitialHandResults>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [collapsed, setCollapsed] = useState(variant === "overlay");
   const apiUrl = import.meta.env.VITE_INITIAL_HAND_API_URL;
   const copy = copyByLanguage[displayLanguage];
   const initialHand =
     initialHands[displayLanguage] ?? initialHands.zh ?? initialHands.en ?? null;
+  const isOverlay = variant === "overlay";
 
   const updateField = (key: keyof BirthFormState, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -81,7 +89,12 @@ export function InitialHandPanel() {
   };
 
   return (
-    <section className="initial-hand-panel" aria-label="Initial Hand">
+    <section
+      className={`initial-hand-panel${isOverlay ? " is-overlay" : ""}${
+        collapsed ? " is-collapsed" : ""
+      }`}
+      aria-label="Initial Hand"
+    >
       <div className="initial-hand-head">
         <div>
           <p className="eyebrow">Initial Hand</p>
@@ -113,20 +126,37 @@ export function InitialHandPanel() {
             <Sparkles aria-hidden="true" size={16} />
             <span>{loading ? copy.generating : copy.generate}</span>
           </button>
+          {isOverlay ? (
+            <button
+              aria-expanded={!collapsed}
+              className="initial-hand-toggle"
+              type="button"
+              onClick={() => setCollapsed((current) => !current)}
+            >
+              <span>{collapsed ? "Open" : "Close"}</span>
+              <ChevronDown
+                aria-hidden="true"
+                className={collapsed ? "" : "is-open"}
+                size={16}
+              />
+            </button>
+          ) : null}
         </div>
       </div>
 
-      <InitialHandBirthForm
-        copy={copy}
-        form={form}
-        onFieldChange={updateField}
-        onPlaceChange={updatePlace}
-      />
+      <div className="initial-hand-body">
+        <InitialHandBirthForm
+          copy={copy}
+          form={form}
+          onFieldChange={updateField}
+          onPlaceChange={updatePlace}
+        />
 
-      {error ? <p className="initial-hand-error">{error}</p> : null}
-      {initialHand ? (
-        <InitialHandResultView copy={copy} initialHand={initialHand} />
-      ) : null}
+        {error ? <p className="initial-hand-error">{error}</p> : null}
+        {initialHand ? (
+          <InitialHandResultView copy={copy} initialHand={initialHand} />
+        ) : null}
+      </div>
     </section>
   );
 }
