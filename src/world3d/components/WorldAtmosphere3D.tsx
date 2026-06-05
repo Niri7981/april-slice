@@ -9,7 +9,7 @@ import {
 } from "three";
 import { dayEndMinute, dayStartMinute } from "../../agentMind/schedule";
 import { world3dAtmosphere } from "../data/world3dConfig";
-import type { World3DLoopTelemetry } from "../hooks/useWorld3DLoop";
+import type { World3DLoopTelemetry } from "../hooks/useWorld3DLoopState";
 
 type WorldAtmosphere3DProps = {
   telemetryRef: RefObject<World3DLoopTelemetry>;
