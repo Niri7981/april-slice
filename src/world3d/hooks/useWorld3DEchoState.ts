@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
 import type { EchoBehaviorEffect } from "../../agentMind/behaviorEffects";
 import type { World3DLoopTelemetry } from "./useWorld3DLoopState";
 
@@ -25,18 +25,18 @@ export const useWorld3DEchoState = ({
   const anchorPauseRemaining = useRef(0);
   const anchorPauseEffectId = useRef<string | null>(null);
 
-  const resetFrameState = () => {
+  const resetFrameState = useCallback(() => {
     echoPauseRemaining.current = 0;
     echoEffectRemaining.current = 0;
     activeEchoEffectId.current = null;
     anchorPauseRemaining.current = 0;
     anchorPauseEffectId.current = null;
     telemetryRef.current.echoIntensity = 0;
-  };
+  }, [telemetryRef]);
 
   useEffect(() => {
     resetFrameState();
-  }, [day, telemetryRef]);
+  }, [day, resetFrameState]);
 
   useEffect(() => {
     if (!echoEffect) {
@@ -52,7 +52,7 @@ export const useWorld3DEchoState = ({
     echoPauseRemaining.current = echoEffect.immediatePauseSeconds;
     echoEffectRemaining.current = echoEffect.durationSeconds;
     telemetryRef.current.echoIntensity = 1;
-  }, [echoEffect, telemetryRef]);
+  }, [echoEffect, resetFrameState, telemetryRef]);
 
   const getActiveEcho = () =>
     echoEffect &&

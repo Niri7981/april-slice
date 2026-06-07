@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Group } from "three";
 import { dayStartMinute } from "../../agentMind/schedule";
 import { createScheduledAgentBody } from "../../entities/agent/agentMovement";
@@ -46,11 +46,14 @@ export const useWorld3DLoopState = ({
     paused,
   });
 
-  const refs: World3DRefs = {
-    playerRef,
-    agentRef,
-    facingRef,
-  };
+  const refs: World3DRefs = useMemo(
+    () => ({
+      playerRef,
+      agentRef,
+      facingRef,
+    }),
+    [],
+  );
 
   useEffect(() => {
     player.current = createPlayerBody();
@@ -70,7 +73,7 @@ export const useWorld3DLoopState = ({
       agent: agent.current,
     });
     onWorldMinuteChanged(dayStartMinute);
-  }, [day, onWorldMinuteChanged]);
+  }, [day, onWorldMinuteChanged, paused, pressure, refs]);
 
   useEffect(() => {
     telemetryRef.current.pressure = pressure;

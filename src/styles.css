@@ -105,9 +105,14 @@ button,
 .world-prototype-label.is-three-renderer {
   position: fixed;
   z-index: 4;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 24px;
+  right: 24px;
+  left: auto;
+  border-width: 2px;
+  background: rgba(244, 237, 222, 0.78);
+  box-shadow: 3px 3px 0 rgba(45, 42, 36, 0.36);
+  font-size: 0.72rem;
+  transform: none;
 }
 
 .world-prototype-frame {
@@ -144,7 +149,12 @@ button,
 }
 
 .world-prototype-frame.is-three-renderer::after {
-  opacity: 0.14;
+  background:
+    radial-gradient(circle at 50% 48%, transparent 0 38%, rgba(36, 32, 28, 0.16) 100%),
+    linear-gradient(90deg, rgba(45, 42, 36, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(45, 42, 36, 0.07) 1px, transparent 1px);
+  background-size: cover, 8px 8px, 8px 8px;
+  opacity: 0.2;
 }
 
 .initial-hand-panel {
@@ -175,8 +185,42 @@ button,
 
 .initial-hand-panel.is-overlay.is-collapsed {
   gap: 0;
+  right: 18px;
+  bottom: 18px;
+  left: auto;
+  width: min(360px, calc(100vw - 32px));
   max-height: 96px;
   overflow: hidden;
+  transform: none;
+  border-width: 3px;
+  background: rgba(244, 237, 222, 0.82);
+  box-shadow: 4px 4px 0 rgba(45, 42, 36, 0.36);
+  padding: 10px;
+}
+
+.initial-hand-panel.is-overlay.is-collapsed .initial-hand-head {
+  align-items: center;
+  gap: 10px;
+}
+
+.initial-hand-panel.is-overlay.is-collapsed .initial-hand-head h2,
+.initial-hand-panel.is-overlay.is-collapsed .initial-hand-language-toggle,
+.initial-hand-panel.is-overlay.is-collapsed .initial-hand-submit {
+  display: none;
+}
+
+.initial-hand-panel.is-overlay.is-collapsed .eyebrow {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.72rem;
+}
+
+.initial-hand-panel.is-overlay.is-collapsed .initial-hand-actions {
+  margin-left: auto;
+}
+
+.initial-hand-panel.is-overlay.is-collapsed .initial-hand-body {
+  display: none;
 }
 
 .initial-hand-body {
@@ -519,8 +563,7 @@ button,
   }
 
   .world-prototype-label.is-three-renderer {
-    top: 12px;
-    max-width: calc(100vw - 24px);
+    display: none;
   }
 
   .world-prototype-shell.is-three-renderer .world-clock-view {
@@ -532,6 +575,13 @@ button,
     width: calc(100vw - 28px);
     bottom: 14px;
     max-height: min(72vh, 720px);
+  }
+
+  .initial-hand-panel.is-overlay.is-collapsed {
+    right: auto;
+    left: 50%;
+    width: min(280px, calc(100vw - 28px));
+    transform: translateX(-50%);
   }
 
   .initial-hand-head {

@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: ["dist"],
+    ignores: ["dist", ".wrangler", "node_modules"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

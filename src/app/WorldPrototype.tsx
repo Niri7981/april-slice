@@ -45,7 +45,7 @@ export function WorldPrototype() {
         aria-hidden="true"
       >
         {isThreeRenderer
-          ? "April Slice world prototype / three preview"
+          ? "April Slice / Three preview"
           : "April Slice world prototype"}
       </div>
       <section
