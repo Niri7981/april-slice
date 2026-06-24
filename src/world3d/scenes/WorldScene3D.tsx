@@ -3,7 +3,7 @@ import type { AgentSignalState } from "../../game/state/agentState";
 import type { WorldNodeId } from "../../world/data/worldGraph";
 import type { WorldTimeOfDay } from "../../world/systems/time/worldTime";
 import { WorldAtmosphere3D } from "../components/WorldAtmosphere3D";
-import { PlayerActor3D } from "../components/WorldActors3D";
+import { AgentActor3D, PlayerActor3D } from "../components/WorldActors3D";
 import { WorldGround3D } from "../components/WorldGround3D";
 import { world3dAtmosphere } from "../data/world3dConfig";
 import { useWorld3DLoop } from "../hooks/useWorld3DLoop";
@@ -38,6 +38,12 @@ export function WorldScene3D(props: WorldScene3DProps) {
       <WorldAtmosphere3D telemetryRef={telemetryRef} />
 
       <WorldGround3D />
+      <AgentActor3D
+        agentRef={refs.agentRef}
+        facingRef={refs.facingRef}
+        pressure={props.agentState.pressure}
+        echoActive={Boolean(props.echoEffect)}
+      />
       <PlayerActor3D playerRef={refs.playerRef} />
     </>
   );
