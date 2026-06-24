@@ -13,7 +13,7 @@ import type { Body, Vector } from "../../../entities/core/body";
 import { getCameraTarget, moveCameraToward } from "../../../entities/camera/camera";
 import { getMoveDirection, moveBody } from "../../../entities/player/playerMovement";
 import type { AgentSignalState } from "../../../game/state/agentState";
-import { viewportSize, worldSize } from "../../data/worldConfig";
+import { viewportSize, worldSize, type Size } from "../../data/worldConfig";
 import { worldPauseTriggers } from "../../data/worldTriggers";
 import { isBodyNearWorldNode } from "../position/worldInteractions";
 const statePressureEffectId = "state-pressure";
@@ -35,17 +35,21 @@ export const advancePlayerMotion = ({
   camera,
   keys,
   dt,
+  cameraYaw = 0,
+  movementWorldSize = worldSize,
 }: {
   player: Body;
   camera: Vector;
   keys: Set<string>;
   dt: number;
+  cameraYaw?: number;
+  movementWorldSize?: Size;
 }): PlayerMotionResult => {
-  const direction = getMoveDirection(keys);
-  const nextPlayer = moveBody(player, direction, dt, worldSize);
+  const direction = getMoveDirection(keys, cameraYaw);
+  const nextPlayer = moveBody(player, direction, dt, movementWorldSize);
   const nextCamera = moveCameraToward(
     camera,
-    getCameraTarget(nextPlayer, viewportSize, worldSize),
+    getCameraTarget(nextPlayer, viewportSize, movementWorldSize),
   );
 
   return { nextPlayer, nextCamera };

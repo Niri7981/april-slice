@@ -8,6 +8,12 @@ import {
   syncWorld3DTransforms,
   type World3DRefs,
 } from "../utils/syncWorld3DTransforms";
+import {
+  type World3DCameraOrbit,
+  world3dCamera,
+  world3dPlayerSpawn,
+  world3dTestFieldCenter,
+} from "../data/world3dConfig";
 
 export type World3DLoopTelemetry = {
   worldMinute: number;
@@ -32,6 +38,10 @@ export const useWorld3DLoopState = ({
   const player = useRef<Body>(createPlayerBody());
   const agent = useRef(createScheduledAgentBody());
   const camera = useRef<Vector>(createCamera());
+  const cameraOrbit = useRef<World3DCameraOrbit>({
+    yaw: world3dCamera.initialYaw,
+    pitch: world3dCamera.initialPitch,
+  });
   const worldMinute = useRef(dayStartMinute);
   const playerRef = useRef<Group | null>(null);
   const agentRef = useRef<Group | null>(null);
@@ -56,9 +66,21 @@ export const useWorld3DLoopState = ({
   );
 
   useEffect(() => {
-    player.current = createPlayerBody();
-    agent.current = createScheduledAgentBody();
+    player.current = {
+      ...createPlayerBody(),
+      x: world3dPlayerSpawn.x,
+      y: world3dPlayerSpawn.y,
+    };
+    agent.current = {
+      ...createScheduledAgentBody(),
+      x: world3dTestFieldCenter.x + 340,
+      y: world3dTestFieldCenter.y - 260,
+    };
     camera.current = createCamera();
+    cameraOrbit.current = {
+      yaw: world3dCamera.initialYaw,
+      pitch: world3dCamera.initialPitch,
+    };
     worldMinute.current = dayStartMinute;
     dayCompleteFired.current = false;
     lastContextKey.current = null;
@@ -88,6 +110,7 @@ export const useWorld3DLoopState = ({
     player,
     agent,
     camera,
+    cameraOrbit,
     worldMinute,
     dayCompleteFired,
     lastContextKey,

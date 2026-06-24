@@ -1,15 +1,11 @@
-import { Application } from "@pixi/react";
 import { useState } from "react";
 import { dayStartMinute } from "../agentMind/schedule";
-import { getRendererMode } from "./rendererMode";
 import {
   DiaryView,
   InitialHandPanel,
   NoteEchoDialog,
   WorldClockView,
 } from "../ui";
-import { viewportSize } from "../world/data/worldConfig";
-import { WorldStage } from "../world/presentation/WorldStage";
 import { useWorldRuntime } from "../world/hooks/useWorldRuntime";
 import { formatWorldMinute } from "../world/systems/time/worldTime";
 import { WorldStage3D } from "../world3d/presentation/WorldStage3D";
@@ -25,8 +21,6 @@ export function WorldPrototype() {
   const { state, actions } = useWorldRuntime();
   const { day, note, diary, agentState, echoEffect } = state;
   const [displayWorldMinute, setDisplayWorldMinute] = useState(dayStartMinute);
-  const rendererMode = getRendererMode();
-  const isThreeRenderer = rendererMode === "three";
 
   const diaryParagraphs =
     diary.record && diary.record.diaryFragments.length > 0
@@ -37,64 +31,32 @@ export function WorldPrototype() {
     "纸页没有留下新的折痕。";
 
   return (
-    <main
-      className={`world-prototype-shell${isThreeRenderer ? " is-three-renderer" : ""}`}
-    >
-      <div
-        className={`world-prototype-label${isThreeRenderer ? " is-three-renderer" : ""}`}
-        aria-hidden="true"
-      >
-        {isThreeRenderer
-          ? "April Slice / Three preview"
-          : "April Slice world prototype"}
+    <main className="world-prototype-shell is-three-renderer">
+      <div className="world-prototype-label is-three-renderer" aria-hidden="true">
+        April Slice / Three preview
       </div>
       <section
-        className={`world-prototype-frame${isThreeRenderer ? " is-three-renderer" : ""}`}
+        className="world-prototype-frame is-three-renderer"
         aria-label="April Slice world prototype"
       >
         <WorldClockView
           dayLabel={`Day ${day}`}
           timeLabel={formatWorldMinute(displayWorldMinute)}
         />
-        {isThreeRenderer ? (
-          <WorldStage3D
-            day={day}
-            paused={note.dialogOpen || diary.open}
-            noteAvailable={note.available}
-            agentState={agentState}
-            echoEffect={echoEffect}
-            onNotePicked={actions.openNotePaper}
-            onDayComplete={actions.completeDay}
-            onEchoEffectExpired={actions.clearEchoEffect}
-            onWorldContextChanged={actions.recordWorldContext}
-            onWorldMinuteChanged={setDisplayWorldMinute}
-          />
-        ) : (
-          <Application
-            background={0x20251f}
-            width={viewportSize.width}
-            height={viewportSize.height}
-            antialias={false}
-            autoDensity
-            resolution={window.devicePixelRatio || 1}
-            className="world-prototype-canvas"
-          >
-            <WorldStage
-              day={day}
-              paused={note.dialogOpen || diary.open}
-              noteAvailable={note.available}
-              agentState={agentState}
-              echoEffect={echoEffect}
-              onNotePicked={actions.openNotePaper}
-              onDayComplete={actions.completeDay}
-              onEchoEffectExpired={actions.clearEchoEffect}
-              onWorldContextChanged={actions.recordWorldContext}
-              onWorldMinuteChanged={setDisplayWorldMinute}
-            />
-          </Application>
-        )}
+        <WorldStage3D
+          day={day}
+          paused={note.dialogOpen || diary.open}
+          noteAvailable={note.available}
+          agentState={agentState}
+          echoEffect={echoEffect}
+          onNotePicked={actions.openNotePaper}
+          onDayComplete={actions.completeDay}
+          onEchoEffectExpired={actions.clearEchoEffect}
+          onWorldContextChanged={actions.recordWorldContext}
+          onWorldMinuteChanged={setDisplayWorldMinute}
+        />
       </section>
-      <InitialHandPanel variant={isThreeRenderer ? "overlay" : "default"} />
+      <InitialHandPanel variant="overlay" />
       {note.dialogOpen ? (
         <NoteEchoDialog
           ariaLabel="Note Echo"

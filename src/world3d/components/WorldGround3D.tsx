@@ -1,74 +1,93 @@
-import { Line } from "@react-three/drei";
-import { worldEdges, worldNodes, type WorldNodeId } from "../../world/data/worldGraph";
-import { world3dGroundSize } from "../data/world3dConfig";
+import { world3dGroundSize, world3dTestFieldCenter } from "../data/world3dConfig";
 import { projectWorldPosition, projectWorldScalar } from "../utils/projectWorldPosition";
 
-const landmarkBlocks = [
+const fieldCenter = projectWorldPosition(world3dTestFieldCenter, 0);
+
+const testStructures = [
   {
-    center: { x: 410, y: 340 },
-    width: 460,
-    depth: 300,
-    height: 28,
-    color: "#e6d1a5",
+    center: {
+      x: world3dTestFieldCenter.x + 1860,
+      y: world3dTestFieldCenter.y - 260,
+    },
+    width: 720,
+    depth: 240,
+    height: 168,
+    color: "#b4a898",
   },
   {
-    center: { x: 1210, y: 440 },
-    width: 620,
-    depth: 360,
-    height: 42,
-    color: "#c8d0b7",
-  },
-  {
-    center: { x: 1660, y: 930 },
-    width: 500,
+    center: {
+      x: world3dTestFieldCenter.x + 1420,
+      y: world3dTestFieldCenter.y - 260,
+    },
+    width: 160,
     depth: 220,
-    height: 34,
-    color: "#8ca8b0",
+    height: 52,
+    color: "#8d8277",
+  },
+  {
+    center: {
+      x: world3dTestFieldCenter.x + 2200,
+      y: world3dTestFieldCenter.y - 260,
+    },
+    width: 180,
+    depth: 220,
+    height: 52,
+    color: "#8d8277",
   },
 ];
-
-const roadPolyline = [
-  { x: 420, y: 490 },
-  { x: 780, y: 680 },
-  { x: 1120, y: 620 },
-  { x: 1510, y: 820 },
-];
-
-const graphLines = (() => {
-  const drawnEdges = new Set<string>();
-
-  return Object.entries(worldEdges).flatMap(([fromNodeId, nextNodeIds]) =>
-    nextNodeIds.flatMap((toNodeId) => {
-      const edgeKey = [fromNodeId, toNodeId].sort().join(":");
-
-      if (drawnEdges.has(edgeKey)) {
-        return [];
-      }
-
-      drawnEdges.add(edgeKey);
-
-      return [
-        {
-          key: edgeKey,
-          points: [
-            projectWorldPosition(worldNodes[fromNodeId as WorldNodeId], 1.5),
-            projectWorldPosition(worldNodes[toNodeId], 1.5),
-          ],
-        },
-      ];
-    }),
-  );
-})();
 
 export function WorldGround3D() {
   return (
     <group>
-      <mesh rotation-x={-Math.PI / 2} receiveShadow position={[0, -10, 0]}>
+      <mesh
+        rotation-x={-Math.PI / 2}
+        receiveShadow
+        position={[fieldCenter[0], -10, fieldCenter[2]]}
+      >
         <planeGeometry args={[world3dGroundSize.width, world3dGroundSize.depth]} />
-        <meshStandardMaterial color="#d8ddc8" />
+        <meshStandardMaterial color="#c7c0af" />
       </mesh>
 
-      {landmarkBlocks.map((block) => (
+      <mesh
+        rotation-x={-Math.PI / 2}
+        receiveShadow
+        position={[fieldCenter[0] + 70, -9.6, fieldCenter[2] - 40]}
+      >
+        <planeGeometry
+          args={[projectWorldScalar(4200), projectWorldScalar(700)]}
+        />
+        <meshStandardMaterial color="#6f746f" roughness={0.92} />
+      </mesh>
+
+      <mesh
+        receiveShadow
+        position={[
+          fieldCenter[0],
+          8,
+          fieldCenter[2] + projectWorldScalar(2200),
+        ]}
+      >
+        <boxGeometry
+          args={[world3dGroundSize.width, 16, projectWorldScalar(180)]}
+        />
+        <meshStandardMaterial color="#b4ad9f" />
+      </mesh>
+
+      <mesh
+        receiveShadow
+        position={[
+          fieldCenter[0] - projectWorldScalar(2100),
+          10,
+          fieldCenter[2],
+        ]}
+      >
+        <boxGeometry
+          args={[projectWorldScalar(220), 20, projectWorldScalar(2400)]}
+        />
+        <meshStandardMaterial color="#b9b2a4" />
+      </mesh>
+
+      {testStructures.map((block) => (
         <mesh
           key={`${block.center.x}-${block.center.y}`}
           position={projectWorldPosition(block.center, block.height / 2 - 8)}
@@ -84,23 +103,6 @@ export function WorldGround3D() {
           />
           <meshStandardMaterial color={block.color} />
         </mesh>
-      ))}
-
-      <Line
-        points={roadPolyline.map((point) => projectWorldPosition(point, 3))}
-        color="#5f695b"
-        lineWidth={6}
-      />
-
-      {graphLines.map((line) => (
-        <Line
-          key={line.key}
-          points={line.points}
-          color="#73826e"
-          transparent
-          opacity={0.65}
-          lineWidth={2}
-        />
       ))}
     </group>
   );

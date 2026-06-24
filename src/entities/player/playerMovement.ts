@@ -6,14 +6,30 @@ export const playerSpeed = 230;
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-export const getMoveDirection = (pressedKeys: Set<string>): Vector => ({
-  x:
-    Number(pressedKeys.has("d") || pressedKeys.has("arrowright")) -
-    Number(pressedKeys.has("a") || pressedKeys.has("arrowleft")),
-  y:
-    Number(pressedKeys.has("s") || pressedKeys.has("arrowdown")) -
-    Number(pressedKeys.has("w") || pressedKeys.has("arrowup")),
-});
+export const getMoveDirection = (
+  pressedKeys: Set<string>,
+  cameraYaw = 0,
+): Vector => {
+  const rightInput =
+    Number(pressedKeys.has("arrowright")) -
+    Number(pressedKeys.has("arrowleft"));
+  const forwardInput =
+    Number(pressedKeys.has("arrowup")) -
+    Number(pressedKeys.has("arrowdown"));
+  const right = {
+    x: Math.cos(cameraYaw),
+    y: -Math.sin(cameraYaw),
+  };
+  const forward = {
+    x: -Math.sin(cameraYaw),
+    y: -Math.cos(cameraYaw),
+  };
+
+  return {
+    x: right.x * rightInput + forward.x * forwardInput,
+    y: right.y * rightInput + forward.y * forwardInput,
+  };
+};
 
 export const moveBody = (
   body: Body,

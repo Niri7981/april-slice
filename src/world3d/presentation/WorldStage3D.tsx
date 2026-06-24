@@ -20,13 +20,18 @@ type WorldStage3DProps = {
 };
 
 export function WorldStage3D(props: WorldStage3DProps) {
+  const initialCameraRadius = Math.cos(world3dCamera.initialPitch) * world3dCamera.distance;
+  const initialCameraHeight =
+    world3dCamera.lookAtHeight +
+    Math.sin(world3dCamera.initialPitch) * world3dCamera.distance;
+
   return (
     <Canvas
       className="world-prototype-canvas"
       shadows
       dpr={[1, 2]}
       camera={{
-        position: [0, world3dCamera.height, world3dCamera.distance],
+        position: [0, initialCameraHeight, initialCameraRadius],
         fov: world3dCamera.fov,
         near: world3dCamera.near,
         far: world3dCamera.far,

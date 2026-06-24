@@ -12,13 +12,11 @@
   },
   "dependencies": {
     "@fontsource/fusion-pixel-12px-monospaced-sc": "^5.2.5",
-    "@pixi/react": "^8.0.5",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "astronomia": "^4.2.0",
     "lucide-react": "^0.468.0",
     "lunar-javascript": "^1.7.7",
-    "pixi.js": "^8.18.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.13.3",

@@ -20,6 +20,7 @@ import { useWorldInput } from "../../world/hooks/useWorldInput";
 import {
   syncWorld3DTransforms,
 } from "../utils/syncWorld3DTransforms";
+import { world3dRunBounds } from "../data/world3dConfig";
 import { updateWorld3DCamera } from "../utils/updateWorld3DCamera";
 import { useWorld3DEchoState } from "./useWorld3DEchoState";
 import { useWorld3DLoopState } from "./useWorld3DLoopState";
@@ -55,6 +56,7 @@ export const useWorld3DLoop = ({
     player,
     agent,
     camera,
+    cameraOrbit,
     worldMinute,
     dayCompleteFired,
     lastContextKey,
@@ -79,6 +81,8 @@ export const useWorld3DLoop = ({
         camera: camera.current,
         keys: keys.current,
         dt: delta,
+        cameraYaw: cameraOrbit.current.yaw,
+        movementWorldSize: world3dRunBounds,
       });
 
       worldMinute.current = advanceWorldMinute(worldMinute.current, delta);
@@ -167,6 +171,8 @@ export const useWorld3DLoop = ({
     updateWorld3DCamera({
       camera: state.camera,
       player: player.current,
+      orbit: cameraOrbit.current,
+      keys: keys.current,
       delta,
     });
   });
