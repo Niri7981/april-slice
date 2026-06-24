@@ -7,6 +7,7 @@ import { AgentActor3D, PlayerActor3D } from "../components/WorldActors3D";
 import { WorldGround3D } from "../components/WorldGround3D";
 import { world3dAtmosphere } from "../data/world3dConfig";
 import { useWorld3DLoop } from "../hooks/useWorld3DLoop";
+import React from "react";
 
 type WorldScene3DProps = {
   day: number;

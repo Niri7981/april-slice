@@ -5,6 +5,7 @@ import type { WorldNodeId } from "../../world/data/worldGraph";
 import type { WorldTimeOfDay } from "../../world/systems/time/worldTime";
 import { world3dCamera } from "../data/world3dConfig";
 import { WorldScene3D } from "../scenes/WorldScene3D";
+import React from "react";
 
 type WorldStage3DProps = {
   day: number;
